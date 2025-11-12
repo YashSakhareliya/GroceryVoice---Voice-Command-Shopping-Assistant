@@ -1,5 +1,6 @@
 import Product from '../models/product.js';
 import Category from '../models/category.js';
+import { findSimilarProducts } from '../utils/findSimilarProducts.js';
 
 // @desc    Add a new product
 // @route   POST /api/products
@@ -18,7 +19,6 @@ export const addProduct = async (req, res) => {
       tags,
       imageUrl,
       isSeasonal,
-      substituteIds, // Expecting an array of product IDs for substitutes
     } = req.body;
 
     if (!name || !basePrice || !categoryName) {
@@ -37,16 +37,8 @@ export const addProduct = async (req, res) => {
       await category.save();
     }
 
-    // Handle Substitutes: Validate provided IDs
-    let substitutes = [];
-    if (substituteIds && substituteIds.length > 0) {
-      // Check if all provided substitute IDs are valid products
-      const foundProducts = await Product.find({ '_id': { $in: substituteIds } });
-      if (foundProducts.length !== substituteIds.length) {
-        return res.status(400).json({ message: 'One or more substitute product IDs are invalid.' });
-      }
-      substitutes = foundProducts.map(p => p._id);
-    }
+    // Find similar products automatically based on name, brand, category, and tags
+    const similarProductIds = await findSimilarProducts(name, brand, category._id, tags);
 
     const product = new Product({
       name,
@@ -60,11 +52,20 @@ export const addProduct = async (req, res) => {
       tags,
       imageUrl,
       isSeasonal,
-      substitutes,
+      substitutes: similarProductIds,
       addedBy: req.user._id, // from protect middleware
     });
 
     const createdProduct = await product.save();
+
+    // Bidirectional linking: Add this product as a substitute to all similar products
+    if (similarProductIds.length > 0) {
+      await Product.updateMany(
+        { _id: { $in: similarProductIds } },
+        { $addToSet: { substitutes: createdProduct._id } }
+      );
+    }
+
     res.status(201).json(createdProduct);
 
   } catch (error) {
@@ -90,7 +91,6 @@ export const updateProduct = async (req, res) => {
       tags,
       imageUrl,
       isSeasonal,
-      substituteIds,
     } = req.body;
 
     const product = await Product.findById(req.params.id);
@@ -122,19 +122,6 @@ export const updateProduct = async (req, res) => {
         await category.save();
       }
       product.category = category._id;
-    }
-
-    // Handle substitutes update
-    if (substituteIds) {
-        let substitutes = [];
-        if (substituteIds.length > 0) {
-            const foundProducts = await Product.find({ '_id': { $in: substituteIds } });
-            if (foundProducts.length !== substituteIds.length) {
-                return res.status(400).json({ message: 'One or more substitute product IDs are invalid.' });
-            }
-            substitutes = foundProducts.map(p => p._id);
-        }
-        product.substitutes = substitutes;
     }
 
     const updatedProduct = await product.save();
