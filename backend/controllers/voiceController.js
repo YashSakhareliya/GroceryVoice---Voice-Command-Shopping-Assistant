@@ -1,5 +1,11 @@
 import Product from '../models/product.js';
 import ShoppingList from '../models/shoppingList.js';
+import { 
+  addToShoppingList, 
+  removeFromShoppingList, 
+  clearShoppingList, 
+  getShoppingList 
+} from './shoppingListController.js';
 
 /**
  * Extract intent and entities from voice command text
@@ -153,45 +159,34 @@ export const processVoiceCommand = async (req, res) => {
           });
         }
 
-        // Add to shopping list
-        let shoppingList = await ShoppingList.findOne({ user: req.user._id });
+        // Use existing addToShoppingList service
+        req.body = {
+          productId: product._id.toString(),
+          quantity: parsed.entities.quantity,
+          notes: `Added via voice: "${text}"`
+        };
 
-        if (!shoppingList) {
-          return res.status(404).json({ 
-            success: false,
-            message: 'Shopping list not found' 
-          });
-        }
-
-        const existingItemIndex = shoppingList.items.findIndex(
-          item => item.product.toString() === product._id.toString()
-        );
-
-        if (existingItemIndex > -1) {
-          shoppingList.items[existingItemIndex].quantity += parsed.entities.quantity;
-        } else {
-          shoppingList.items.push({
-            product: product._id,
-            name: product.name,
-            quantity: parsed.entities.quantity,
-            unit: product.unit,
-            notes: `Added via voice: "${text}"`,
-          });
-        }
-
-        await shoppingList.save();
-
-        return res.json({
-          success: true,
-          message: `Added ${parsed.entities.quantity} ${product.name} to your shopping list`,
-          parsed,
-          action: 'added',
-          product: {
-            id: product._id,
-            name: product.name,
-            quantity: parsed.entities.quantity,
+        // Call the existing service
+        await addToShoppingList(req, {
+          json: (data) => {
+            return res.json({
+              success: data.success,
+              message: `Added ${parsed.entities.quantity} ${product.name} to your shopping list`,
+              parsed,
+              action: 'added',
+              product: {
+                id: product._id,
+                name: product.name,
+                quantity: parsed.entities.quantity,
+              },
+              shoppingList: data.shoppingList,
+            });
           },
+          status: (code) => ({
+            json: (data) => res.status(code).json(data)
+          })
         });
+        break;
       }
 
       case 'remove_from_list': {
@@ -214,64 +209,55 @@ export const processVoiceCommand = async (req, res) => {
           });
         }
 
-        // Remove from shopping list
-        let shoppingList = await ShoppingList.findOne({ user: req.user._id });
+        // Use existing removeFromShoppingList service
+        req.params = { productId: product._id.toString() };
 
-        if (!shoppingList) {
-          return res.status(404).json({ 
-            success: false,
-            message: 'Shopping list not found' 
-          });
-        }
-
-        const initialLength = shoppingList.items.length;
-        shoppingList.items = shoppingList.items.filter(
-          item => item.product.toString() !== product._id.toString()
-        );
-
-        if (shoppingList.items.length === initialLength) {
-          return res.json({
-            success: false,
-            message: `${product.name} was not in your shopping list`,
-            parsed,
-          });
-        }
-
-        await shoppingList.save();
-
-        return res.json({
-          success: true,
-          message: `Removed ${product.name} from your shopping list`,
-          parsed,
-          action: 'removed',
-          product: {
-            id: product._id,
-            name: product.name,
+        // Call the existing service
+        await removeFromShoppingList(req, {
+          json: (data) => {
+            if (!data.success) {
+              return res.json({
+                success: false,
+                message: `${product.name} was not in your shopping list`,
+                parsed,
+              });
+            }
+            return res.json({
+              success: true,
+              message: `Removed ${product.name} from your shopping list`,
+              parsed,
+              action: 'removed',
+              product: {
+                id: product._id,
+                name: product.name,
+              },
+              shoppingList: data.shoppingList,
+            });
           },
+          status: (code) => ({
+            json: (data) => res.status(code).json(data)
+          })
         });
+        break;
       }
 
       case 'clear_list': {
-        let shoppingList = await ShoppingList.findOne({ user: req.user._id });
-
-        if (!shoppingList) {
-          return res.status(404).json({ 
-            success: false,
-            message: 'Shopping list not found' 
-          });
-        }
-
-        const itemCount = shoppingList.items.length;
-        shoppingList.items = [];
-        await shoppingList.save();
-
-        return res.json({
-          success: true,
-          message: `Cleared ${itemCount} items from your shopping list`,
-          parsed,
-          action: 'cleared',
-          itemsCleared: itemCount,
+        // Use existing clearShoppingList service
+        await clearShoppingList(req, {
+          json: (data) => {
+            return res.json({
+              success: true,
+              message: data.message,
+              parsed,
+              action: 'cleared',
+              shoppingList: data.shoppingList,
+            });
+          },
+          status: (code) => ({
+            json: (data) => res.status(code).json(data)
+          })
         });
+        break;
       }
 
       case 'search_product': {
@@ -299,23 +285,22 @@ export const processVoiceCommand = async (req, res) => {
       }
 
       case 'view_list': {
-        const shoppingList = await ShoppingList.findOne({ user: req.user._id })
-          .populate('items.product', 'name basePrice imageUrl brand stock');
-
-        if (!shoppingList) {
-          return res.status(404).json({ 
-            success: false,
-            message: 'Shopping list not found' 
-          });
-        }
-
-        return res.json({
-          success: true,
-          message: `You have ${shoppingList.items.length} items in your shopping list`,
-          parsed,
-          action: 'view',
-          shoppingList,
+        // Use existing getShoppingList service
+        await getShoppingList(req, {
+          json: (data) => {
+            return res.json({
+              success: true,
+              message: `You have ${data.shoppingList.items.length} items in your shopping list`,
+              parsed,
+              action: 'view',
+              shoppingList: data.shoppingList,
+            });
+          },
+          status: (code) => ({
+            json: (data) => res.status(code).json(data)
+          })
         });
+        break;
       }
 
       default: {
