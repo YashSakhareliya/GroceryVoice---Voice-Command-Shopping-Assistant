@@ -3,8 +3,9 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import connectDB from './config/db.js';
 dotenv.config();
-
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
