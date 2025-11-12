@@ -1,5 +1,6 @@
 import Product from '../models/product.js';
 import Category from '../models/category.js';
+import Discount from '../models/discount.js';
 import { findSimilarProducts } from '../utils/findSimilarProducts.js';
 
 // @desc    Add a new product
@@ -134,6 +135,131 @@ export const updateProduct = async (req, res) => {
 };
 
 
-// @desc    Get substitute IDs for a product based on its name
+// @desc    Apply discount to product(s) or category
+// @route   POST /api/products/discount
+// @access  Private/Admin
+export const applyDiscount = async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      discountType, // 'percentage' or 'fixed_amount'
+      discountValue,
+      appliesTo, // 'product' or 'category'
+      targetProductIds, // Array of product IDs (required if appliesTo is 'product')
+      targetCategoryIds, // Array of category IDs (required if appliesTo is 'category')
+      startDate,
+      endDate,
+    } = req.body;
 
-// apply discount
+    // Validation
+    if (!name || !discountType || !discountValue || !appliesTo || !startDate || !endDate) {
+      return res.status(400).json({ 
+        message: 'Name, discount type, discount value, applies to, start date, and end date are required' 
+      });
+    }
+
+    if (!['percentage', 'fixed_amount'].includes(discountType)) {
+      return res.status(400).json({ 
+        message: 'Discount type must be either "percentage" or "fixed_amount"' 
+      });
+    }
+
+    if (!['product', 'category'].includes(appliesTo)) {
+      return res.status(400).json({ 
+        message: 'Applies to must be either "product" or "category"' 
+      });
+    }
+
+    // Validate percentage discount
+    if (discountType === 'percentage' && (discountValue < 0 || discountValue > 100)) {
+      return res.status(400).json({ 
+        message: 'Percentage discount must be between 0 and 100' 
+      });
+    }
+
+    // Validate fixed amount discount
+    if (discountType === 'fixed_amount' && discountValue < 0) {
+      return res.status(400).json({ 
+        message: 'Fixed amount discount must be a positive number' 
+      });
+    }
+
+    // Validate dates
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (start >= end) {
+      return res.status(400).json({ 
+        message: 'End date must be after start date' 
+      });
+    }
+
+    let targetProducts = [];
+    let targetCategories = [];
+
+    // Handle product-based discount
+    if (appliesTo === 'product') {
+      if (!targetProductIds || targetProductIds.length === 0) {
+        return res.status(400).json({ 
+          message: 'Target product IDs are required when applying discount to products' 
+        });
+      }
+
+      // Verify all product IDs exist
+      const foundProducts = await Product.find({ '_id': { $in: targetProductIds } });
+      if (foundProducts.length !== targetProductIds.length) {
+        return res.status(400).json({ 
+          message: 'One or more product IDs are invalid' 
+        });
+      }
+
+      targetProducts = targetProductIds;
+    }
+
+    // Handle category-based discount
+    if (appliesTo === 'category') {
+      if (!targetCategoryIds || targetCategoryIds.length === 0) {
+        return res.status(400).json({ 
+          message: 'Target category IDs are required when applying discount to categories' 
+        });
+      }
+
+      // Verify all category IDs exist
+      const foundCategories = await Category.find({ '_id': { $in: targetCategoryIds } });
+      if (foundCategories.length !== targetCategoryIds.length) {
+        return res.status(400).json({ 
+          message: 'One or more category IDs are invalid' 
+        });
+      }
+
+      targetCategories = targetCategoryIds;
+    }
+
+    // Create the discount
+    const discount = new Discount({
+      name,
+      description,
+      discountType,
+      discountValue,
+      appliesTo,
+      targetProducts,
+      targetCategories,
+      startDate: start,
+      endDate: end,
+      createdBy: req.user._id, // from protect middleware
+    });
+
+    const createdDiscount = await discount.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Discount applied successfully',
+      discount: createdDiscount,
+    });
+
+  } catch (error) {
+    console.error('Error applying discount:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};

@@ -1,7 +1,6 @@
 import express from 'express';
-import { addProduct, updateProduct } from '../controllers/productController.js';
-import { protect, adminOnly } from '../middleware/auth.js';
-import upload from '../middleware/upload.js'; 
+import { addProduct, updateProduct, applyDiscount } from '../controllers/productController.js';
+import { protect, adminOnly } from '../middleware/auth.js'; 
 
 const router = express.Router();
 
@@ -14,5 +13,10 @@ router.post('/', protect, adminOnly, addProduct);
 // @desc    Update a product
 // @access  Private/Admin
 router.put('/:id', protect, adminOnly, updateProduct);
+
+// @route   POST /api/products/discount
+// @desc    Apply discount to products or categories
+// @access  Private/Admin
+router.post('/discount', protect, adminOnly, applyDiscount);
 
 export default router;
