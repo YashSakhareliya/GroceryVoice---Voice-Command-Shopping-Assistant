@@ -14,6 +14,10 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(cookieParser());
 
+import authRoutes from './routes/auth.js';
+
+app.use('/api/auth', authRoutes);
+
 app.get('/health', (req, res) => {
     res.send('Server is healthy');
 });
