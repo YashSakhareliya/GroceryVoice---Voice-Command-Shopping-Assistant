@@ -1,13 +1,22 @@
 import { Plus } from 'lucide-react'
+import { useDispatch } from 'react-redux'
+import { addToCart } from '../store/slices/cartSlice'
 
 function ProductCard({ 
+  id,
   image = 'https://placehold.co/200x200/f8fafc/64748b?text=Item',
   discount,
   brand,
   title,
   price,
-  oldPrice
+  oldPrice,
+  category
 }) {
+  const dispatch = useDispatch()
+
+  const handleAddToCart = () => {
+    dispatch(addToCart({ id, image, discount, brand, title, price, oldPrice, category }))
+  }
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
       {/* Image Container */}
@@ -45,7 +54,10 @@ function ProductCard({
         </div>
 
         {/* Add Button */}
-        <button className="w-full py-2 border border-red-600 text-red-600 rounded-md text-sm font-semibold hover:bg-red-50 transition-colors flex items-center justify-center gap-1">
+        <button 
+          onClick={handleAddToCart}
+          className="w-full py-2 border border-red-600 text-red-600 rounded-md text-sm font-semibold hover:bg-red-50 transition-colors flex items-center justify-center gap-1"
+        >
           <Plus size={16} />
           Add
         </button>

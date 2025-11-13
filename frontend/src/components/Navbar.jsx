@@ -10,6 +10,7 @@ function Navbar() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { isAuthenticated, user } = useSelector((state) => state.auth)
+  const { totalItems } = useSelector((state) => state.cart)
 
   const handleLocationClick = () => {
     const newLocation = prompt('Enter your location:', selectedLocation)
@@ -93,11 +94,16 @@ function Navbar() {
         )}
 
         {/* Cart Button */}
-        <button className="relative p-2 hover:bg-gray-100 rounded-full">
+        <button 
+          onClick={() => navigate('/cart')}
+          className="relative p-2 hover:bg-gray-100 rounded-full"
+        >
           <ShoppingCart size={24} className="text-gray-700" />
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-            0
-          </span>
+          {totalItems > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+              {totalItems}
+            </span>
+          )}
         </button>
       </div>
     </nav>
