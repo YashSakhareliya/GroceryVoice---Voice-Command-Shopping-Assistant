@@ -28,12 +28,12 @@ function HomePage() {
   ]
 
   const dailyStaplesProducts = [
-    { id: 1, brand: 'Tata', title: 'Salt - Iodised', price: '22.00' },
-    { id: 2, brand: 'Fortune', title: 'Rice - Basmati', price: '180.00', oldPrice: '200.00' },
-    { id: 3, brand: 'Aashirvaad', title: 'Atta - Whole Wheat', price: '210.00' },
-    { id: 4, brand: 'Tata', title: 'Tea - Premium', price: '140.00', oldPrice: '160.00' },
-    { id: 5, brand: 'Sundrop', title: 'Oil - Sunflower', price: '165.00' },
-    { id: 6, brand: 'Everest', title: 'Turmeric Powder', price: '85.00', oldPrice: '95.00' },
+    { id: 7, brand: 'Tata', title: 'Salt - Iodised', price: '22.00' },
+    { id: 8, brand: 'Fortune', title: 'Rice - Basmati', price: '180.00', oldPrice: '200.00' },
+    { id: 9, brand: 'Aashirvaad', title: 'Atta - Whole Wheat', price: '210.00' },
+    { id: 10, brand: 'Tata', title: 'Tea - Premium', price: '140.00', oldPrice: '160.00' },
+    { id: 11, brand: 'Sundrop', title: 'Oil - Sunflower', price: '165.00' },
+    { id: 12, brand: 'Everest', title: 'Turmeric Powder', price: '85.00', oldPrice: '95.00' },
   ]
 
   const categories = [

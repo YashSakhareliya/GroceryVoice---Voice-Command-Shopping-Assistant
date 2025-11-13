@@ -1,11 +1,29 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-const initialState = {
-  isModalOpen: false,
-  isLogin: true, // true for login, false for signup
-  user: null,
-  isAuthenticated: false,
+// Load initial state from localStorage
+const loadState = () => {
+  try {
+    const serializedState = localStorage.getItem('auth')
+    if (serializedState === null) {
+      return {
+        isModalOpen: false,
+        isLogin: true,
+        user: null,
+        isAuthenticated: false,
+      }
+    }
+    return JSON.parse(serializedState)
+  } catch (err) {
+    return {
+      isModalOpen: false,
+      isLogin: true,
+      user: null,
+      isAuthenticated: false,
+    }
+  }
 }
+
+const initialState = loadState()
 
 const authSlice = createSlice({
   name: 'auth',
@@ -25,10 +43,19 @@ const authSlice = createSlice({
       state.user = action.payload
       state.isAuthenticated = true
       state.isModalOpen = false
+      // Save to localStorage
+      localStorage.setItem('auth', JSON.stringify({
+        isModalOpen: false,
+        isLogin: true,
+        user: action.payload,
+        isAuthenticated: true,
+      }))
     },
     logout: (state) => {
       state.user = null
       state.isAuthenticated = false
+      // Clear from localStorage
+      localStorage.removeItem('auth')
     },
   },
 })
