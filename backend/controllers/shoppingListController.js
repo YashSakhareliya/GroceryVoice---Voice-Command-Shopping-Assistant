@@ -1,6 +1,7 @@
 import ShoppingList from '../models/shoppingList.js';
 import Product from '../models/product.js';
 import User from '../models/user.js';
+import { calculateProductsDiscount } from '../utils/calculateDiscount.js';
 
 // @desc    Add product to shopping list
 // @route   POST /api/shoppinglist/add
@@ -52,12 +53,37 @@ export const addToShoppingList = async (req, res) => {
 
     // Populate the shopping list before sending response
     shoppingList = await ShoppingList.findById(shoppingList._id)
-      .populate('items.product', 'name basePrice imageUrl brand stock');
+      .populate({
+        path: 'items.product',
+        select: 'name basePrice imageUrl brand stock unit category tags isSeasonal substitutes',
+        populate: [
+          { path: 'category', select: 'name description' },
+          { path: 'substitutes', select: 'name basePrice imageUrl' }
+        ]
+      });
+
+    // Calculate discounts for all products
+    const products = shoppingList.items.map(item => item.product);
+    const productsWithDiscounts = await calculateProductsDiscount(products);
+
+    // Map discounted products back to shopping list items
+    const itemsWithDiscounts = shoppingList.items.map(item => {
+      const discountedProduct = productsWithDiscounts.find(
+        p => p._id.toString() === item.product._id.toString()
+      );
+      return {
+        ...item.toObject(),
+        product: discountedProduct || item.product
+      };
+    });
 
     res.json({
       success: true,
       message: 'Product added to shopping list',
-      shoppingList,
+      shoppingList: {
+        ...shoppingList.toObject(),
+        items: itemsWithDiscounts
+      },
     });
 
   } catch (error) {
@@ -93,12 +119,37 @@ export const removeFromShoppingList = async (req, res) => {
 
     // Populate the shopping list before sending response
     shoppingList = await ShoppingList.findById(shoppingList._id)
-      .populate('items.product', 'name basePrice imageUrl brand stock');
+      .populate({
+        path: 'items.product',
+        select: 'name basePrice imageUrl brand stock unit category tags isSeasonal substitutes',
+        populate: [
+          { path: 'category', select: 'name description' },
+          { path: 'substitutes', select: 'name basePrice imageUrl' }
+        ]
+      });
+
+    // Calculate discounts for all products
+    const products = shoppingList.items.map(item => item.product);
+    const productsWithDiscounts = await calculateProductsDiscount(products);
+
+    // Map discounted products back to shopping list items
+    const itemsWithDiscounts = shoppingList.items.map(item => {
+      const discountedProduct = productsWithDiscounts.find(
+        p => p._id.toString() === item.product._id.toString()
+      );
+      return {
+        ...item.toObject(),
+        product: discountedProduct || item.product
+      };
+    });
 
     res.json({
       success: true,
       message: 'Product removed from shopping list',
-      shoppingList,
+      shoppingList: {
+        ...shoppingList.toObject(),
+        items: itemsWithDiscounts
+      },
     });
 
   } catch (error) {
@@ -141,15 +192,47 @@ export const clearShoppingList = async (req, res) => {
 export const getShoppingList = async (req, res) => {
   try {
     const shoppingList = await ShoppingList.findOne({ user: req.user._id })
-      .populate('items.product', 'name basePrice imageUrl brand stock unit');
+      .populate({
+        path: 'items.product',
+        select: 'name basePrice imageUrl brand stock unit category tags isSeasonal substitutes',
+        populate: [
+          { path: 'category', select: 'name description' },
+          { path: 'substitutes', select: 'name basePrice imageUrl' }
+        ]
+      });
 
     if (!shoppingList) {
       return res.status(404).json({ message: 'Shopping list not found' });
     }
 
+    // Extract products from shopping list items
+    const products = shoppingList.items
+      .filter(item => item.product) // Filter out any null products
+      .map(item => item.product);
+
+    // Calculate discounts for all products
+    const productsWithDiscounts = await calculateProductsDiscount(products);
+
+    // Map discounted products back to shopping list items
+    const itemsWithDiscounts = shoppingList.items.map(item => {
+      if (!item.product) return item;
+      
+      const discountedProduct = productsWithDiscounts.find(
+        p => p._id.toString() === item.product._id.toString()
+      );
+
+      return {
+        ...item.toObject(),
+        product: discountedProduct || item.product
+      };
+    });
+
     res.json({
       success: true,
-      shoppingList,
+      shoppingList: {
+        ...shoppingList.toObject(),
+        items: itemsWithDiscounts
+      },
     });
 
   } catch (error) {
@@ -195,12 +278,37 @@ export const updateProductQuantity = async (req, res) => {
 
     // Populate the shopping list before sending response
     shoppingList = await ShoppingList.findById(shoppingList._id)
-      .populate('items.product', 'name basePrice imageUrl brand stock');
+      .populate({
+        path: 'items.product',
+        select: 'name basePrice imageUrl brand stock unit category tags isSeasonal substitutes',
+        populate: [
+          { path: 'category', select: 'name description' },
+          { path: 'substitutes', select: 'name basePrice imageUrl' }
+        ]
+      });
+
+    // Calculate discounts for all products
+    const products = shoppingList.items.map(item => item.product);
+    const productsWithDiscounts = await calculateProductsDiscount(products);
+
+    // Map discounted products back to shopping list items
+    const itemsWithDiscounts = shoppingList.items.map(item => {
+      const discountedProduct = productsWithDiscounts.find(
+        p => p._id.toString() === item.product._id.toString()
+      );
+      return {
+        ...item.toObject(),
+        product: discountedProduct || item.product
+      };
+    });
 
     res.json({
       success: true,
       message: 'Quantity updated',
-      shoppingList,
+      shoppingList: {
+        ...shoppingList.toObject(),
+        items: itemsWithDiscounts
+      },
     });
 
   } catch (error) {
