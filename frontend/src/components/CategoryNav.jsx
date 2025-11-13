@@ -1,30 +1,26 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { productService } from '../services/productService'
 
 function CategoryNav() {
   const navigate = useNavigate()
-  const categories = [
-    'Fruits & Vegetables',
-    'Dairy & Bakery',
-    'Staples',
-    'Snacks',
-    'Meat & Fish',
-    'Beverages',
-    'Personal Care',
-    'Home Care',
-    'Baby Care',
-    'Pet Care',
-    'Organic',
-    'Gourmet',
-    'Meat & Fish',
-    'Beverages',
-    'Personal Care'
-  ]
-
+  const [categories, setCategories] = useState([])
   const scrollContainerRef = useRef(null)
   const [showLeftArrow, setShowLeftArrow] = useState(false)
   const [showRightArrow, setShowRightArrow] = useState(true)
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await productService.getCategories()
+        setCategories(data.categories || [])
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+      }
+    }
+    fetchCategories()
+  }, [])
 
   const scroll = (direction) => {
     const container = scrollContainerRef.current
@@ -72,13 +68,13 @@ function CategoryNav() {
             className="flex items-center gap-6 overflow-x-auto scrollbar-hide scroll-smooth"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {categories.map((category, index) => (
+            {categories.map((category) => (
               <button
-                key={index}
-                onClick={() => navigate(`/products?category=${encodeURIComponent(category)}`)}
+                key={category._id}
+                onClick={() => navigate(`/products?category=${encodeURIComponent(category.name)}`)}
                 className="text-sm text-gray-700 hover:text-dark-green font-medium whitespace-nowrap transition-colors"
               >
-                {category}
+                {category.name}
               </button>
             ))}
           </div>

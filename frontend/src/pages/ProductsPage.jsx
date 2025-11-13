@@ -12,47 +12,71 @@ function ProductsPage() {
   const categoryParam = searchParams.get('category') || ''
   
   const [products, setProducts] = useState([])
+  const [allProducts, setAllProducts] = useState([]) // Store all fetched products
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
-  const [selectedCategories, setSelectedCategories] = useState(categoryParam ? [categoryParam] : [])
-  const [selectedBrands, setSelectedBrands] = useState([])
+  const [selectedCategoryId, setSelectedCategoryId] = useState('') // Store category ID
   const [priceRange, setPriceRange] = useState({ min: null, max: null })
+  const [minDiscount, setMinDiscount] = useState(null)
   const [expandedSections, setExpandedSections] = useState({
     category: true,
-    rating: true,
-    brands: true,
     price: true,
     discount: true
   })
 
-  // Fetch products when filters change
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await productService.getCategories()
+        setCategories(data.categories || [])
+        
+        // If category param exists, find and set the category ID
+        if (categoryParam && data.categories) {
+          const category = data.categories.find(cat => cat.name === categoryParam)
+          if (category) {
+            setSelectedCategoryId(category._id)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+      }
+    }
+    fetchCategories()
+  }, [])
+
+  // Fetch products from backend when search or category changes
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true)
         
-        const params = {}
+        let data
         
-        if (searchQuery) {
-          params.search = searchQuery
+        if (selectedCategoryId) {
+          // Fetch by category ID - works with or without search
+          if (searchQuery) {
+            // Search within selected category
+            const params = { search: searchQuery }
+            data = await productService.getProductsByCategory(selectedCategoryId, params)
+          } else {
+            // Just fetch category products
+            data = await productService.getProductsByCategory(selectedCategoryId)
+          }
+        } else if (searchQuery) {
+          // Search across all categories when no category selected
+          const params = { search: searchQuery }
+          data = await productService.getProducts(params)
+        } else {
+          // Fetch all products
+          data = await productService.getProducts()
         }
         
-        if (selectedBrands.length > 0) {
-          params.brand = selectedBrands[0] // API supports single brand
-        }
-        
-        if (priceRange.min) params.minPrice = priceRange.min
-        if (priceRange.max) params.maxPrice = priceRange.max
-        
-        // If specific categories selected, fetch from each
-        if (selectedCategories.length > 0) {
-          // For now, just search with tags
-          params.tags = selectedCategories.join(',')
-        }
-        
-        const data = await productService.getProducts(params)
+        setAllProducts(data.products || [])
         setProducts(data.products || [])
       } catch (error) {
         console.error('Error fetching products:', error)
+        setAllProducts([])
         setProducts([])
       } finally {
         setLoading(false)
@@ -60,11 +84,47 @@ function ProductsPage() {
     }
 
     fetchProducts()
-  }, [searchQuery, selectedCategories, selectedBrands, priceRange])
+  }, [searchQuery, selectedCategoryId])
+
+  // Apply frontend filters when price or discount changes
+  useEffect(() => {
+    let filtered = [...allProducts]
+    
+    // Filter by price range
+    if (priceRange.min !== null || priceRange.max !== null) {
+      filtered = filtered.filter(product => {
+        const price = product.finalPrice || product.basePrice
+        if (priceRange.min !== null && price < priceRange.min) return false
+        if (priceRange.max !== null && price > priceRange.max) return false
+        return true
+      })
+    }
+    
+    // Filter by discount percentage
+    if (minDiscount !== null) {
+      filtered = filtered.filter(product => {
+        if (!product.appliedDiscount) return false
+        const discountPercent = product.appliedDiscount.discountType === 'percentage'
+          ? product.appliedDiscount.discountValue
+          : ((product.basePrice - product.finalPrice) / product.basePrice) * 100
+        return discountPercent >= minDiscount
+      })
+    }
+    
+    setProducts(filtered)
+  }, [allProducts, priceRange, minDiscount])
 
   useEffect(() => {
-    setSelectedCategories(categoryParam ? [categoryParam] : [])
-  }, [categoryParam])
+    // When categoryParam changes from URL, find and set the category ID
+    if (categoryParam && categories.length > 0) {
+      const category = categories.find(cat => cat.name === categoryParam)
+      if (category) {
+        setSelectedCategoryId(category._id)
+      }
+    } else {
+      setSelectedCategoryId('')
+    }
+  }, [categoryParam, categories])
 
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
@@ -73,56 +133,36 @@ function ProductsPage() {
     }))
   }
 
-  const categories = [
-    'Fruits & Vegetables',
-    'Dairy & Bakery',
-    'Staples',
-    'Snacks',
-    'Meat & Fish',
-    'Beverages',
-    'Personal Care',
-    'Home Care',
-    'Baby Care',
-    'Pet Care',
-    'Organic',
-    'Gourmet'
-  ]
-
-  const brands = ['fresho!', 'Amul', 'Mother Dairy', 'Britannia', 'Tata', 'Fortune', 'Aashirvaad']
-
   const getPageTitle = () => {
-    if (searchQuery && selectedCategories.length > 0) {
-      return `Search results for "${searchQuery}" in ${selectedCategories.join(', ')}`
+    const selectedCategory = categories.find(cat => cat._id === selectedCategoryId)
+    const categoryName = selectedCategory?.name || ''
+    
+    if (searchQuery && categoryName) {
+      return `Search results for "${searchQuery}" in ${categoryName}`
     } else if (searchQuery) {
       return `Search results for "${searchQuery}"`
-    } else if (selectedCategories.length > 0) {
-      return selectedCategories.join(', ')
+    } else if (categoryName) {
+      return categoryName
     }
     return 'All Products'
   }
 
-  const handleCategoryToggle = (category) => {
-    setSelectedCategories(prev => {
-      if (prev.includes(category)) {
-        return prev.filter(c => c !== category)
-      } else {
-        return [...prev, category]
-      }
-    })
-  }
-
-  const handleBrandToggle = (brand) => {
-    setSelectedBrands(prev => {
-      if (prev.includes(brand)) {
-        return prev.filter(b => b !== brand)
-      } else {
-        return [...prev, brand]
-      }
-    })
+  const handleCategorySelect = (categoryId) => {
+    // Only one category can be selected at a time
+    setSelectedCategoryId(categoryId === selectedCategoryId ? '' : categoryId)
   }
 
   const handlePriceFilter = (min, max) => {
-    setPriceRange({ min, max })
+    // Toggle off if clicking the same filter
+    if (priceRange.min === min && priceRange.max === max) {
+      setPriceRange({ min: null, max: null })
+    } else {
+      setPriceRange({ min, max })
+    }
+  }
+
+  const handleDiscountFilter = (discount) => {
+    setMinDiscount(discount === minDiscount ? null : discount)
   }
 
   const FilterSection = ({ title, sectionKey, children }) => (
@@ -175,35 +215,15 @@ function ProductsPage() {
               <FilterSection title="Category" sectionKey="category">
                 <CheckboxOption 
                   label="All Categories" 
-                  checked={selectedCategories.length === 0}
-                  onChange={() => setSelectedCategories([])}
+                  checked={!selectedCategoryId}
+                  onChange={() => setSelectedCategoryId('')}
                 />
                 {categories.map((cat) => (
                   <CheckboxOption 
-                    key={cat}
-                    label={cat} 
-                    checked={selectedCategories.includes(cat)}
-                    onChange={() => handleCategoryToggle(cat)}
-                  />
-                ))}
-              </FilterSection>
-
-              {/* Product Rating */}
-              <FilterSection title="Product Rating" sectionKey="rating">
-                <CheckboxOption label="4★ & above" />
-                <CheckboxOption label="3★ & above" />
-                <CheckboxOption label="2★ & above" />
-                <CheckboxOption label="1★ & above" />
-              </FilterSection>
-
-              {/* Brands */}
-              <FilterSection title="Brands" sectionKey="brands">
-                {brands.map((brand) => (
-                  <CheckboxOption 
-                    key={brand}
-                    label={brand}
-                    checked={selectedBrands.includes(brand)}
-                    onChange={() => handleBrandToggle(brand)}
+                    key={cat._id}
+                    label={cat.name} 
+                    checked={selectedCategoryId === cat._id}
+                    onChange={() => handleCategorySelect(cat._id)}
                   />
                 ))}
               </FilterSection>
@@ -212,7 +232,7 @@ function ProductsPage() {
               <FilterSection title="Price" sectionKey="price">
                 <CheckboxOption 
                   label="Under ₹50" 
-                  checked={priceRange.max === 50}
+                  checked={priceRange.min === null && priceRange.max === 50}
                   onChange={() => handlePriceFilter(null, 50)}
                 />
                 <CheckboxOption 
@@ -227,18 +247,38 @@ function ProductsPage() {
                 />
                 <CheckboxOption 
                   label="Above ₹200"
-                  checked={priceRange.min === 200}
+                  checked={priceRange.min === 200 && priceRange.max === null}
                   onChange={() => handlePriceFilter(200, null)}
                 />
               </FilterSection>
 
               {/* Discount */}
               <FilterSection title="Discount" sectionKey="discount">
-                <CheckboxOption label="50% or more" />
-                <CheckboxOption label="40% or more" />
-                <CheckboxOption label="30% or more" />
-                <CheckboxOption label="20% or more" />
-                <CheckboxOption label="10% or more" />
+                <CheckboxOption 
+                  label="50% or more" 
+                  checked={minDiscount === 50}
+                  onChange={() => handleDiscountFilter(50)}
+                />
+                <CheckboxOption 
+                  label="40% or more" 
+                  checked={minDiscount === 40}
+                  onChange={() => handleDiscountFilter(40)}
+                />
+                <CheckboxOption 
+                  label="30% or more" 
+                  checked={minDiscount === 30}
+                  onChange={() => handleDiscountFilter(30)}
+                />
+                <CheckboxOption 
+                  label="20% or more" 
+                  checked={minDiscount === 20}
+                  onChange={() => handleDiscountFilter(20)}
+                />
+                <CheckboxOption 
+                  label="10% or more" 
+                  checked={minDiscount === 10}
+                  onChange={() => handleDiscountFilter(10)}
+                />
               </FilterSection>
             </div>
           </aside>

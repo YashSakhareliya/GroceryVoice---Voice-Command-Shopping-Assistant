@@ -1,6 +1,12 @@
 import api from './api'
 
 export const productService = {
+  // Get all categories
+  getCategories: async () => {
+    const response = await api.get('/user/categories')
+    return response.data
+  },
+
   // Get all products with filters
   getProducts: async (params = {}) => {
     const response = await api.get('/user/products', { params })
