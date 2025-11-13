@@ -245,6 +245,7 @@ export const processVoiceCommand = async (req, res) => {
               message: `Added ${parsed.entities.quantity} ${product.name} to your shopping list`,
               parsed,
               action: 'added',
+              redirect: '/cart',
               product: {
                 id: product._id,
                 name: product.name,
@@ -320,6 +321,7 @@ export const processVoiceCommand = async (req, res) => {
                 message: `Removed ${removeQuantity} ${product.name} from your shopping list. ${data.shoppingList.items.find(i => i.product._id.toString() === product._id.toString()).quantity} remaining`,
                 parsed,
                 action: 'quantity_reduced',
+                redirect: '/cart',
                 product: {
                   id: product._id,
                   name: product.name,
@@ -351,6 +353,7 @@ export const processVoiceCommand = async (req, res) => {
                 message: `Removed ${product.name} from your shopping list`,
                 parsed,
                 action: 'removed',
+                redirect: '/cart',
                 product: {
                   id: product._id,
                   name: product.name,
@@ -375,6 +378,7 @@ export const processVoiceCommand = async (req, res) => {
               message: data.message,
               parsed,
               action: 'cleared',
+              redirect: '/cart',
               shoppingList: data.shoppingList,
             });
           },
@@ -405,6 +409,8 @@ export const processVoiceCommand = async (req, res) => {
           message: `Found ${products.length} products matching "${parsed.entities.product}"`,
           parsed,
           action: 'search',
+          redirect: '/products',
+          searchQuery: parsed.entities.product,
           products,
         });
       }
@@ -418,6 +424,7 @@ export const processVoiceCommand = async (req, res) => {
               message: `You have ${data.shoppingList.items.length} items in your shopping list`,
               parsed,
               action: 'view',
+              redirect: '/cart',
               shoppingList: data.shoppingList,
             });
           },

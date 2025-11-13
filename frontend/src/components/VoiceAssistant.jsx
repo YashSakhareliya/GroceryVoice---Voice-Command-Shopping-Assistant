@@ -1,11 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
 import { Mic, MicOff, X } from 'lucide-react'
+import { fetchCart } from '../store/slices/cartSlice'
 
 function VoiceAssistant() {
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
   const [isOpen, setIsOpen] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [interimTranscript, setInterimTranscript] = useState('')
+  const [responseMessage, setResponseMessage] = useState('')
   const recognitionRef = useRef(null)
   const silenceTimerRef = useRef(null)
 
@@ -117,17 +123,49 @@ function VoiceAssistant() {
         const response = await voiceService.processCommand(finalTranscript.trim())
         console.log('Voice Command Response:', response)
         
-        // TODO: Handle different response types (add to cart, search, etc.)
-        // For now, just log the response
+        // Show response message
+        setResponseMessage(response.message || 'Command processed')
+        
+        // Refresh cart if cart-related action
+        const cartActions = ['added', 'removed', 'cleared', 'quantity_reduced', 'view']
+        if (cartActions.includes(response.action)) {
+          dispatch(fetchCart())
+        }
+        
+        // Handle navigation based on response
+        if (response.redirect) {
+          // If search action, pass search query as state
+          if (response.action === 'search' && response.searchQuery) {
+            setTimeout(() => {
+              // Navigate with both state and URL params to ensure update
+              navigate(`${response.redirect}?search=${encodeURIComponent(response.searchQuery)}`)
+              handleClose()
+            }, 1500) // Show message for 1.5 seconds before redirecting
+          } else {
+            // For cart-related actions, just navigate
+            setTimeout(() => {
+              navigate(response.redirect)
+              handleClose()
+            }, 1500)
+          }
+        } else {
+          // No redirect, just show message and close after delay
+          setTimeout(() => {
+            handleClose()
+          }, 2000)
+        }
         
       } catch (error) {
         console.error('Voice command error:', error.response?.data?.message || error.message)
+        setResponseMessage(error.response?.data?.message || 'Failed to process command')
+        setTimeout(() => {
+          setResponseMessage('')
+        }, 3000)
       }
       
-      // Reset and close
+      // Reset transcript
       setTranscript('')
       setInterimTranscript('')
-      setIsOpen(false)
     }
   }
 
@@ -135,6 +173,7 @@ function VoiceAssistant() {
     handleStopListening()
     setTranscript('')
     setInterimTranscript('')
+    setResponseMessage('')
     setIsOpen(false)
   }
 
@@ -196,6 +235,13 @@ function VoiceAssistant() {
                   </p>
                 )}
               </div>
+
+              {/* Response Message */}
+              {responseMessage && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                  <p className="text-green-800 text-sm text-center">{responseMessage}</p>
+                </div>
+              )}
 
               {/* Controls */}
               <div className="flex gap-3">

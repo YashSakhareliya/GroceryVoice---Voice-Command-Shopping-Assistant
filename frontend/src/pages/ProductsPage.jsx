@@ -43,7 +43,7 @@ function ProductsPage() {
       }
     }
     fetchCategories()
-  }, [])
+  }, [categoryParam])
 
   // Fetch products from backend when search or category changes
   useEffect(() => {
@@ -84,7 +84,7 @@ function ProductsPage() {
     }
 
     fetchProducts()
-  }, [searchQuery, selectedCategoryId])
+  }, [searchQuery, selectedCategoryId, categoryParam])
 
   // Apply frontend filters when price or discount changes
   useEffect(() => {
