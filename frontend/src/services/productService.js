@@ -26,4 +26,10 @@ export const productService = {
     })
     return response.data
   },
+
+  // Get substitute suggestions for a product
+  getSubstitutes: async (productId) => {
+    const response = await api.get(`/suggestions/substitutes/${productId}`)
+    return response.data
+  },
 }

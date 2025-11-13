@@ -1,12 +1,13 @@
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { Minus, Plus, Trash2 } from 'lucide-react'
-import { removeFromCartAsync, updateQuantityAsync, fetchCart } from '../store/slices/cartSlice'
+import { Minus, Plus, Trash2, AlertTriangle } from 'lucide-react'
+import { removeFromCartAsync, updateQuantityAsync, fetchCart, addToCartAsync } from '../store/slices/cartSlice'
 import { openAuthModal } from '../store/slices/authSlice'
 import Navbar from '../components/Navbar'
 import CategoryNav from '../components/CategoryNav'
 import { useEffect, useState } from 'react'
 import { orderService } from '../services/orderService'
+import { productService } from '../services/productService'
 
 function CartPage() {
   const dispatch = useDispatch()
@@ -14,6 +15,8 @@ function CartPage() {
   const { isAuthenticated } = useSelector((state) => state.auth)
   const { items, totalItems, totalPrice } = useSelector((state) => state.cart)
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+  const [substitutes, setSubstitutes] = useState({}) // Store substitutes for each product
+  const [loadingSubstitutes, setLoadingSubstitutes] = useState({}) // Track loading state
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -24,6 +27,30 @@ function CartPage() {
       dispatch(fetchCart())
     }
   }, [isAuthenticated, dispatch, navigate])
+
+  // Fetch substitutes for out-of-stock items
+  useEffect(() => {
+    const fetchSubstitutesForItems = async () => {
+      for (const item of items) {
+        const isOutOfStock = item.quantity > item.product.stock
+        if (isOutOfStock && !substitutes[item.product._id]) {
+          setLoadingSubstitutes(prev => ({ ...prev, [item.product._id]: true }))
+          try {
+            const data = await productService.getSubstitutes(item.product._id)
+            setSubstitutes(prev => ({ ...prev, [item.product._id]: data.suggestions || [] }))
+          } catch (error) {
+            console.error('Error fetching substitutes:', error)
+          } finally {
+            setLoadingSubstitutes(prev => ({ ...prev, [item.product._id]: false }))
+          }
+        }
+      }
+    }
+
+    if (items.length > 0) {
+      fetchSubstitutesForItems()
+    }
+  }, [items])
 
   if (!isAuthenticated) {
     return null
@@ -38,6 +65,10 @@ function CartPage() {
 
   const handleDelete = async (productId) => {
     await dispatch(removeFromCartAsync(productId))
+  }
+
+  const handleAddSubstitute = async (productId) => {
+    await dispatch(addToCartAsync({ productId, quantity: 1 }))
   }
 
   const handlePlaceOrder = async () => {
@@ -75,7 +106,7 @@ function CartPage() {
     }
     return sum
   }, 0)
-  
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -113,59 +144,131 @@ function CartPage() {
                 </div>
 
                 <div className="divide-y">
-                  {items.map((item) => (
-                    <div key={item._id} className="p-6 grid grid-cols-12 gap-4 items-center hover:bg-gray-50">
-                      <div className="col-span-6 flex items-center gap-4">
-                        <img
-                          src={item.product.imageUrl || 'https://placehold.co/80x80/f8fafc/64748b?text=Item'}
-                          alt={item.name}
-                          className="w-20 h-20 object-cover rounded"
-                        />
-                        <div>
-                          <h3 className="font-medium text-gray-900">{item.name}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="font-bold text-gray-900">₹{item.product.finalPrice}</span>
-                            {item.product.hasDiscount && (
-                              <span className="text-sm text-gray-400 line-through">₹{item.product.basePrice}</span>
+                  {items.map((item) => {
+                    const isOutOfStock = item.quantity > item.product.stock
+                    const itemSubstitutes = substitutes[item.product._id] || []
+                    const isLoadingSubstitutes = loadingSubstitutes[item.product._id]
+                    
+                    return (
+                      <div key={item._id}>
+                        <div className="p-6 grid grid-cols-12 gap-4 items-center hover:bg-gray-50">
+                          <div className="col-span-6 flex items-center gap-4">
+                            <img
+                              src={item.product.imageUrl || 'https://placehold.co/80x80/f8fafc/64748b?text=Item'}
+                              alt={item.name}
+                              className="w-20 h-20 object-cover rounded"
+                            />
+                            <div>
+                              <h3 className="font-medium text-gray-900">{item.name}</h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="font-bold text-gray-900">₹{item.product.finalPrice}</span>
+                                {item.product.hasDiscount && (
+                                  <span className="text-sm text-gray-400 line-through">₹{item.product.basePrice}</span>
+                                )}
+                              </div>
+                              {item.product.hasDiscount && (
+                                <p className="text-xs text-green-600 mt-1">
+                                  Saved: ₹{((parseFloat(item.product.basePrice) - parseFloat(item.product.finalPrice)) * item.quantity).toFixed(2)}
+                                </p>
+                              )}
+                              {isOutOfStock && (
+                                <div className="flex items-center gap-1 mt-2 text-red-600 text-xs font-semibold">
+                                  <AlertTriangle size={14} />
+                                  <span>Insufficient Stock (Available: {item.product.stock})</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="col-span-3 flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleQuantityChange(item.product._id, item.quantity, -1)}
+                              className="w-8 h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-100"
+                            >
+                              <Minus size={16} />
+                            </button>
+                            <span className="w-12 text-center font-medium">{item.quantity}</span>
+                            <button
+                              onClick={() => handleQuantityChange(item.product._id, item.quantity, 1)}
+                              className="w-8 h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-100"
+                              disabled={item.quantity >= item.product.stock}
+                            >
+                              <Plus size={16} />
+                            </button>
+                          </div>
+
+                          <div className="col-span-3 flex items-center justify-end gap-4">
+                            <span className="font-bold text-gray-900">
+                              ₹{(parseFloat(item.product.finalPrice) * item.quantity).toFixed(2)}
+                            </span>
+                            <button
+                              onClick={() => handleDelete(item.product._id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Substitute Suggestions */}
+                        {isOutOfStock && (
+                          <div className="px-6 pb-4 bg-yellow-50 border-t border-yellow-200">
+                            <div className="flex items-center gap-2 mb-3 pt-3">
+                              <AlertTriangle size={16} className="text-yellow-600" />
+                              <h4 className="font-semibold text-sm text-gray-900">
+                                Alternative Products Available
+                              </h4>
+                            </div>
+
+                            {isLoadingSubstitutes ? (
+                              <p className="text-xs text-gray-500">Loading alternatives...</p>
+                            ) : itemSubstitutes.length > 0 ? (
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {itemSubstitutes.slice(0, 4).map((substitute) => (
+                                  <div
+                                    key={substitute._id}
+                                    className="bg-white rounded-lg border border-gray-200 p-3 hover:shadow-md transition-shadow"
+                                  >
+                                    <img
+                                      src={substitute.imageUrl || 'https://placehold.co/100x100/f8fafc/64748b?text=Alt'}
+                                      alt={substitute.name}
+                                      className="w-full h-20 object-cover rounded mb-2"
+                                    />
+                                    <h5 className="text-xs font-medium text-gray-900 line-clamp-2 mb-1">
+                                      {substitute.name}
+                                    </h5>
+                                    <div className="flex items-center gap-1 mb-2">
+                                      <span className="text-sm font-bold text-gray-900">
+                                        ₹{substitute.finalPrice}
+                                      </span>
+                                      {substitute.hasDiscount && (
+                                        <span className="text-xs text-gray-400 line-through">
+                                          ₹{substitute.basePrice}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {substitute.comparison?.cheaper && (
+                                      <p className="text-xs text-green-600 mb-2">
+                                        Save ₹{Math.abs(substitute.comparison.priceDifference).toFixed(2)}
+                                      </p>
+                                    )}
+                                    <button
+                                      onClick={() => handleAddSubstitute(substitute._id)}
+                                      className="w-full bg-light-green text-white text-xs py-1.5 rounded hover:bg-opacity-90 transition-colors"
+                                    >
+                                      Add to Cart
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-gray-500">No alternatives available</p>
                             )}
                           </div>
-                          {item.product.hasDiscount && (
-                            <p className="text-xs text-green-600 mt-1">
-                              Saved: ₹{((parseFloat(item.product.basePrice) - parseFloat(item.product.finalPrice)) * item.quantity).toFixed(2)}
-                            </p>
-                          )}
-                        </div>
+                        )}
                       </div>
-
-                      <div className="col-span-3 flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => handleQuantityChange(item.product._id, item.quantity, -1)}
-                          className="w-8 h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-100"
-                        >
-                          <Minus size={16} />
-                        </button>
-                        <span className="w-12 text-center font-medium">{item.quantity}</span>
-                        <button
-                          onClick={() => handleQuantityChange(item.product._id, item.quantity, 1)}
-                          className="w-8 h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-100"
-                        >
-                          <Plus size={16} />
-                        </button>
-                      </div>
-
-                      <div className="col-span-3 flex items-center justify-end gap-4">
-                        <span className="font-bold text-gray-900">
-                          ₹{(parseFloat(item.product.finalPrice) * item.quantity).toFixed(2)}
-                        </span>
-                        <button
-                          onClick={() => handleDelete(item.product._id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             </div>

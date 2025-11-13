@@ -37,9 +37,16 @@ function ProductCard({
         <img 
           src={product.imageUrl || 'https://placehold.co/200x200/f8fafc/64748b?text=Product'} 
           alt={product.name}
-          className="w-full h-48 object-cover"
+          className={`w-full h-48 object-cover ${product.stock === 0 ? 'opacity-50' : ''}`}
         />
-        {product.appliedDiscount && (
+        {product.stock === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center  bg-opacity-40">
+            <span className="bg-red-600 text-white text-sm font-bold px-4 py-2 rounded-md">
+              OUT OF STOCK
+            </span>
+          </div>
+        )}
+        {product.appliedDiscount && product.stock > 0 && (
           <span className="absolute top-2 left-2 bg-dark-green text-white text-xs font-semibold px-2 py-1 rounded">
             {product.appliedDiscount.discountValue}{product.appliedDiscount.discountType == "percentage" ? '%' : ''} OFF
           </span>
@@ -70,10 +77,15 @@ function ProductCard({
         {!cartItem ? (
           <button 
             onClick={handleAddToCart}
-            className="w-full py-2 border border-red-600 text-red-600 rounded-md text-sm font-semibold hover:bg-red-50 transition-colors flex items-center justify-center gap-1"
+            disabled={product.stock === 0}
+            className={`w-full py-2 border rounded-md text-sm font-semibold transition-colors flex items-center justify-center gap-1 ${
+              product.stock === 0 
+                ? 'border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed' 
+                : 'border-red-600 text-red-600 hover:bg-red-50'
+            }`}
           >
             <Plus size={16} />
-            Add
+            {product.stock === 0 ? 'Out of Stock' : 'Add'}
           </button>
         ) : (
           <div className="flex items-center justify-between bg-red-50 border border-red-600 rounded-md px-2 py-1.5">
@@ -88,7 +100,12 @@ function ProductCard({
             </span>
             <button
               onClick={() => handleQuantityChange(1)}
-              className="w-7 h-7 flex items-center justify-center text-red-600 hover:bg-red-100 rounded"
+              disabled={cartItem.quantity >= product.stock}
+              className={`w-7 h-7 flex items-center justify-center rounded ${
+                cartItem.quantity >= product.stock 
+                  ? 'text-gray-400 cursor-not-allowed' 
+                  : 'text-red-600 hover:bg-red-100'
+              }`}
             >
               <Plus size={16} />
             </button>
