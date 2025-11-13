@@ -29,15 +29,15 @@ function CartPage() {
     return null
   }
 
-  const handleQuantityChange = async (id, currentQuantity, change) => {
+  const handleQuantityChange = async (productId, currentQuantity, change) => {
     const newQuantity = currentQuantity + change
     if (newQuantity > 0) {
-      await dispatch(updateQuantityAsync({ id, quantity: newQuantity }))
+      await dispatch(updateQuantityAsync({ productId, quantity: newQuantity }))
     }
   }
 
-  const handleDelete = async (id) => {
-    await dispatch(removeFromCartAsync(id))
+  const handleDelete = async (productId) => {
+    await dispatch(removeFromCartAsync(productId))
   }
 
   const handlePlaceOrder = async () => {
@@ -47,7 +47,7 @@ function CartPage() {
     try {
       const orderData = {
         items: items.map(item => ({
-          product: item.id, // product ID from backend
+          product: item.product._id, // product ID from backend
           quantity: item.quantity
         })),
         totalAmount: totalPrice + deliveryFee
@@ -70,12 +70,12 @@ function CartPage() {
 
   const deliveryFee = totalPrice > 200 ? 0 : 40
   const savings = items.reduce((sum, item) => {
-    if (item.oldPrice) {
-      return sum + (parseFloat(item.oldPrice) - parseFloat(item.price)) * item.quantity
+    if (item.product?.hasDiscount) {
+      return sum + (parseFloat(item.product.basePrice) - parseFloat(item.product.finalPrice)) * item.quantity
     }
     return sum
   }, 0)
-
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -114,24 +114,24 @@ function CartPage() {
 
                 <div className="divide-y">
                   {items.map((item) => (
-                    <div key={item.id} className="p-6 grid grid-cols-12 gap-4 items-center hover:bg-gray-50">
+                    <div key={item._id} className="p-6 grid grid-cols-12 gap-4 items-center hover:bg-gray-50">
                       <div className="col-span-6 flex items-center gap-4">
                         <img
-                          src={item.image || 'https://placehold.co/80x80/f8fafc/64748b?text=Item'}
-                          alt={item.title}
+                          src={item.product.imageUrl || 'https://placehold.co/80x80/f8fafc/64748b?text=Item'}
+                          alt={item.name}
                           className="w-20 h-20 object-cover rounded"
                         />
                         <div>
-                          <h3 className="font-medium text-gray-900">{item.title}</h3>
+                          <h3 className="font-medium text-gray-900">{item.name}</h3>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="font-bold text-gray-900">₹{item.price}</span>
-                            {item.oldPrice && (
-                              <span className="text-sm text-gray-400 line-through">₹{item.oldPrice}</span>
+                            <span className="font-bold text-gray-900">₹{item.product.finalPrice}</span>
+                            {item.product.hasDiscount && (
+                              <span className="text-sm text-gray-400 line-through">₹{item.product.basePrice}</span>
                             )}
                           </div>
-                          {item.oldPrice && (
+                          {item.product.hasDiscount && (
                             <p className="text-xs text-green-600 mt-1">
-                              Saved: ₹{((parseFloat(item.oldPrice) - parseFloat(item.price)) * item.quantity).toFixed(2)}
+                              Saved: ₹{((parseFloat(item.product.basePrice) - parseFloat(item.product.finalPrice)) * item.quantity).toFixed(2)}
                             </p>
                           )}
                         </div>
@@ -139,14 +139,14 @@ function CartPage() {
 
                       <div className="col-span-3 flex items-center justify-center gap-2">
                         <button
-                          onClick={() => handleQuantityChange(item.id, item.quantity, -1)}
+                          onClick={() => handleQuantityChange(item.product._id, item.quantity, -1)}
                           className="w-8 h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-100"
                         >
                           <Minus size={16} />
                         </button>
                         <span className="w-12 text-center font-medium">{item.quantity}</span>
                         <button
-                          onClick={() => handleQuantityChange(item.id, item.quantity, 1)}
+                          onClick={() => handleQuantityChange(item.product._id, item.quantity, 1)}
                           className="w-8 h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-100"
                         >
                           <Plus size={16} />
@@ -155,10 +155,10 @@ function CartPage() {
 
                       <div className="col-span-3 flex items-center justify-end gap-4">
                         <span className="font-bold text-gray-900">
-                          ₹{(parseFloat(item.price) * item.quantity).toFixed(2)}
+                          ₹{(parseFloat(item.product.finalPrice) * item.quantity).toFixed(2)}
                         </span>
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => handleDelete(item.product._id)}
                           className="text-red-600 hover:text-red-700"
                         >
                           <Trash2 size={18} />

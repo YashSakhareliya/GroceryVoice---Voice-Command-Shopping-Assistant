@@ -73,7 +73,7 @@ const initialState = {
 const calculateTotals = (items) => {
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
   const totalPrice = items.reduce((sum, item) => {
-    const price = item.product?.basePrice || 0
+    const price = item.product?.finalPrice || item.product?.basePrice || 0
     return sum + (price * item.quantity)
   }, 0)
   return { totalItems, totalPrice }
