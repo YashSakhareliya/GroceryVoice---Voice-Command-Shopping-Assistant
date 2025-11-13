@@ -1,15 +1,21 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { Provider } from 'react-redux'
+import { store } from './store/store'
 import HomePage from './pages/HomePage'
 import ProductsPage from './pages/ProductsPage'
+import AuthModal from './components/AuthModal'
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/products" element={<ProductsPage />} />
-      </Routes>
-    </Router>
+    <Provider store={store}>
+      <Router>
+        <AuthModal />
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/products" element={<ProductsPage />} />
+        </Routes>
+      </Router>
+    </Provider>
   )
 }
 

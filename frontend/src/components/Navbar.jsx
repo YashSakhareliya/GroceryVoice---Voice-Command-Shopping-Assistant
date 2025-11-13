@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ShoppingCart } from 'lucide-react'
+import { useDispatch, useSelector } from 'react-redux'
+import { Search, ShoppingCart, User } from 'lucide-react'
+import { openAuthModal, logout } from '../store/slices/authSlice'
 
 function Navbar() {
   const [selectedLocation, setSelectedLocation] = useState('Mumbai')
   const [searchQuery, setSearchQuery] = useState('')
   const navigate = useNavigate()
+  const dispatch = useDispatch()
+  const { isAuthenticated, user } = useSelector((state) => state.auth)
 
   const handleLocationClick = () => {
     const newLocation = prompt('Enter your location:', selectedLocation)
@@ -64,9 +68,29 @@ function Navbar() {
         </div>
 
         {/* Login/Sign Up Button */}
-        <button className="bg-black text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-800 whitespace-nowrap">
-          Login/ Sign Up
-        </button>
+        {!isAuthenticated ? (
+          <button 
+            onClick={() => dispatch(openAuthModal({ isLogin: true }))}
+            className="bg-black text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-800 whitespace-nowrap"
+          >
+            Login/ Sign Up
+          </button>
+        ) : (
+          <div className="relative group">
+            <button className="bg-dark-green text-white px-4 py-2.5 rounded-md text-sm font-medium hover:bg-opacity-90 whitespace-nowrap flex items-center gap-2">
+              <User size={18} />
+              {user?.name || 'Profile'}
+            </button>
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg hidden group-hover:block z-10">
+              <button
+                onClick={() => dispatch(logout())}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Cart Button */}
         <button className="relative p-2 hover:bg-gray-100 rounded-full">
