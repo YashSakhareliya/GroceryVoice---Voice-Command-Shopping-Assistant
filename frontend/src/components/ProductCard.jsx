@@ -1,6 +1,6 @@
-import { Plus } from 'lucide-react'
-import { useDispatch } from 'react-redux'
-import { addToCart } from '../store/slices/cartSlice'
+import { Plus, Minus } from 'lucide-react'
+import { useDispatch, useSelector } from 'react-redux'
+import { addToCart, updateQuantity } from '../store/slices/cartSlice'
 
 function ProductCard({ 
   id,
@@ -13,9 +13,19 @@ function ProductCard({
   category
 }) {
   const dispatch = useDispatch()
+  const cartItem = useSelector((state) => 
+    state.cart.items.find(item => item.id === id)
+  )
 
   const handleAddToCart = () => {
     dispatch(addToCart({ id, image, discount, brand, title, price, oldPrice, category }))
+  }
+
+  const handleQuantityChange = (change) => {
+    const newQuantity = cartItem.quantity + change
+    if (newQuantity > 0) {
+      dispatch(updateQuantity({ id, quantity: newQuantity }))
+    }
   }
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
@@ -53,14 +63,34 @@ function ProductCard({
           )}
         </div>
 
-        {/* Add Button */}
-        <button 
-          onClick={handleAddToCart}
-          className="w-full py-2 border border-red-600 text-red-600 rounded-md text-sm font-semibold hover:bg-red-50 transition-colors flex items-center justify-center gap-1"
-        >
-          <Plus size={16} />
-          Add
-        </button>
+        {/* Add Button or Quantity Controls */}
+        {!cartItem ? (
+          <button 
+            onClick={handleAddToCart}
+            className="w-full py-2 border border-red-600 text-red-600 rounded-md text-sm font-semibold hover:bg-red-50 transition-colors flex items-center justify-center gap-1"
+          >
+            <Plus size={16} />
+            Add
+          </button>
+        ) : (
+          <div className="flex items-center justify-between bg-red-50 border border-red-600 rounded-md px-2 py-1.5">
+            <button
+              onClick={() => handleQuantityChange(-1)}
+              className="w-7 h-7 flex items-center justify-center text-red-600 hover:bg-red-100 rounded"
+            >
+              <Minus size={16} />
+            </button>
+            <span className="font-semibold text-red-600 min-w-6 text-center">
+              {cartItem.quantity}
+            </span>
+            <button
+              onClick={() => handleQuantityChange(1)}
+              className="w-7 h-7 flex items-center justify-center text-red-600 hover:bg-red-100 rounded"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

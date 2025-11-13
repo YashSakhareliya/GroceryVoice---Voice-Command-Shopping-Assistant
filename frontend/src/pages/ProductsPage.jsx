@@ -10,7 +10,7 @@ function ProductsPage() {
   const searchQuery = searchParams.get('search') || ''
   const categoryParam = searchParams.get('category') || ''
   
-  const [selectedCategory, setSelectedCategory] = useState(categoryParam)
+  const [selectedCategories, setSelectedCategories] = useState(categoryParam ? [categoryParam] : [])
   const [expandedSections, setExpandedSections] = useState({
     category: true,
     rating: true,
@@ -20,7 +20,7 @@ function ProductsPage() {
   })
 
   useEffect(() => {
-    setSelectedCategory(categoryParam)
+    setSelectedCategories(categoryParam ? [categoryParam] : [])
   }, [categoryParam])
 
   const toggleSection = (section) => {
@@ -65,19 +65,31 @@ function ProductsPage() {
       product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.brand.toLowerCase().includes(searchQuery.toLowerCase())
       : true
-    const matchesCategory = selectedCategory ? product.category === selectedCategory : true
+    const matchesCategory = selectedCategories.length > 0 
+      ? selectedCategories.includes(product.category) 
+      : true
     return matchesSearch && matchesCategory
   })
 
   const getPageTitle = () => {
-    if (searchQuery && selectedCategory) {
-      return `Search results for "${searchQuery}" in ${selectedCategory}`
+    if (searchQuery && selectedCategories.length > 0) {
+      return `Search results for "${searchQuery}" in ${selectedCategories.join(', ')}`
     } else if (searchQuery) {
       return `Search results for "${searchQuery}"`
-    } else if (selectedCategory) {
-      return selectedCategory
+    } else if (selectedCategories.length > 0) {
+      return selectedCategories.join(', ')
     }
     return 'All Products'
+  }
+
+  const handleCategoryToggle = (category) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(category)) {
+        return prev.filter(c => c !== category)
+      } else {
+        return [...prev, category]
+      }
+    })
   }
 
   const FilterSection = ({ title, sectionKey, children }) => (
@@ -130,15 +142,15 @@ function ProductsPage() {
               <FilterSection title="Category" sectionKey="category">
                 <CheckboxOption 
                   label="All Categories" 
-                  checked={!selectedCategory}
-                  onChange={() => setSelectedCategory('')}
+                  checked={selectedCategories.length === 0}
+                  onChange={() => setSelectedCategories([])}
                 />
                 {categories.map((cat) => (
                   <CheckboxOption 
                     key={cat}
                     label={cat} 
-                    checked={selectedCategory === cat}
-                    onChange={() => setSelectedCategory(selectedCategory === cat ? '' : cat)}
+                    checked={selectedCategories.includes(cat)}
+                    onChange={() => handleCategoryToggle(cat)}
                   />
                 ))}
               </FilterSection>

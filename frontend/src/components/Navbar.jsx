@@ -55,20 +55,20 @@ function Navbar() {
         </form>
 
         {/* Delivery Info */}
-        <div className="flex flex-col items-start whitespace-nowrap">
-          <div className="flex items-center gap-1 text-xs text-gray-600">
-            <span className="text-green-600">⚡</span>
+        <div className="bg-black text-white px-4 py-1 rounded-md">
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-green-500">⚡</span>
             <span className="font-semibold">Delivery in 5 mins</span>
           </div>
           <button 
             onClick={handleLocationClick}
-            className="text-xs text-gray-500 hover:text-gray-700 hover:underline cursor-pointer"
+            className="text-xs text-gray-300 hover:text-white hover:underline cursor-pointer"
           >
             {selectedLocation || 'Select Location'}
           </button>
         </div>
 
-        {/* Login/Sign Up Button */}
+        {/* Login/Sign Up or Profile */}
         {!isAuthenticated ? (
           <button 
             onClick={() => dispatch(openAuthModal({ isLogin: true }))}
@@ -78,14 +78,19 @@ function Navbar() {
           </button>
         ) : (
           <div className="relative group">
-            <button className="bg-dark-green text-white px-4 py-2.5 rounded-md text-sm font-medium hover:bg-opacity-90 whitespace-nowrap flex items-center gap-2">
-              <User size={18} />
-              {user?.name || 'Profile'}
+            <button className="p-2 px-6 hover:bg-gray-100 rounded-full">
+              <User size={24} className="text-gray-700" />
             </button>
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg hidden group-hover:block z-10">
+            <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg border border-gray-200 hidden group-hover:block z-10 overflow-hidden">
+              <button
+                onClick={() => navigate('/profile')}
+                className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                Profile
+              </button>
               <button
                 onClick={() => dispatch(logout())}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-200"
               >
                 Logout
               </button>
@@ -96,7 +101,7 @@ function Navbar() {
         {/* Cart Button */}
         <button 
           onClick={() => navigate('/cart')}
-          className="relative p-2 hover:bg-gray-100 rounded-full"
+          className="relative p-2 px-6 hover:bg-gray-100 rounded-full"
         >
           <ShoppingCart size={24} className="text-gray-700" />
           {totalItems > 0 && (
