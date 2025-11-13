@@ -1,44 +1,47 @@
 import { Plus, Minus } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
-import { addToCart, updateQuantity } from '../store/slices/cartSlice'
+import { addToCartAsync, updateQuantityAsync } from '../store/slices/cartSlice'
 
 function ProductCard({ 
-  id,
-  image = 'https://placehold.co/200x200/f8fafc/64748b?text=Item',
-  discount,
-  brand,
-  title,
-  price,
-  oldPrice,
-  category
+  product
 }) {
   const dispatch = useDispatch()
+  const { isAuthenticated } = useSelector((state) => state.auth)
   const cartItem = useSelector((state) => 
-    state.cart.items.find(item => item.id === id)
+    state.cart.items.find(item => item.product?._id === product._id)
   )
 
   const handleAddToCart = () => {
-    dispatch(addToCart({ id, image, discount, brand, title, price, oldPrice, category }))
+    if (!isAuthenticated) {
+      // Could show login modal here
+      return
+    }
+    dispatch(addToCartAsync({ productId: product._id, quantity: 1 }))
   }
 
   const handleQuantityChange = (change) => {
     const newQuantity = cartItem.quantity + change
     if (newQuantity > 0) {
-      dispatch(updateQuantity({ id, quantity: newQuantity }))
+      dispatch(updateQuantityAsync({ productId: product._id, quantity: newQuantity }))
     }
   }
+
+  // Calculate display price
+  const displayPrice = product.finalPrice || product.basePrice
+  const hasDiscount = product.discountedPrice && product.discountedPrice < product.basePrice
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
       {/* Image Container */}
       <div className="relative">
         <img 
-          src={image} 
-          alt={title}
+          src={product.imageUrl || 'https://placehold.co/200x200/f8fafc/64748b?text=Product'} 
+          alt={product.name}
           className="w-full h-48 object-cover"
         />
-        {discount && (
+        {product.discount && (
           <span className="absolute top-2 left-2 bg-dark-green text-white text-xs font-semibold px-2 py-1 rounded">
-            {discount}% OFF
+            {product.discount}% OFF
           </span>
         )}
       </div>
@@ -46,20 +49,20 @@ function ProductCard({
       {/* Product Info */}
       <div className="p-3">
         {/* Brand */}
-        {brand && (
-          <p className="text-xs text-gray-500 mb-1">{brand}</p>
+        {product.brand && (
+          <p className="text-xs text-gray-500 mb-1">{product.brand}</p>
         )}
 
         {/* Title */}
         <h3 className="text-sm font-medium text-gray-800 mb-2 line-clamp-2">
-          {title}
+          {product.name}
         </h3>
 
         {/* Price Section */}
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-lg font-bold text-gray-900">₹{price}</span>
-          {oldPrice && (
-            <span className="text-sm text-gray-400 line-through">₹{oldPrice}</span>
+          <span className="text-lg font-bold text-gray-900">₹{displayPrice}</span>
+          {hasDiscount && (
+            <span className="text-sm text-gray-400 line-through">₹{product.basePrice}</span>
           )}
         </div>
 
@@ -97,3 +100,4 @@ function ProductCard({
 }
 
 export default ProductCard
+

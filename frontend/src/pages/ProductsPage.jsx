@@ -4,13 +4,18 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import CategoryNav from '../components/CategoryNav'
 import ProductCard from '../components/ProductCard'
+import { productService } from '../services/productService'
 
 function ProductsPage() {
   const [searchParams] = useSearchParams()
   const searchQuery = searchParams.get('search') || ''
   const categoryParam = searchParams.get('category') || ''
   
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
   const [selectedCategories, setSelectedCategories] = useState(categoryParam ? [categoryParam] : [])
+  const [selectedBrands, setSelectedBrands] = useState([])
+  const [priceRange, setPriceRange] = useState({ min: null, max: null })
   const [expandedSections, setExpandedSections] = useState({
     category: true,
     rating: true,
@@ -18,6 +23,44 @@ function ProductsPage() {
     price: true,
     discount: true
   })
+
+  // Fetch products when filters change
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true)
+        
+        const params = {}
+        
+        if (searchQuery) {
+          params.search = searchQuery
+        }
+        
+        if (selectedBrands.length > 0) {
+          params.brand = selectedBrands[0] // API supports single brand
+        }
+        
+        if (priceRange.min) params.minPrice = priceRange.min
+        if (priceRange.max) params.maxPrice = priceRange.max
+        
+        // If specific categories selected, fetch from each
+        if (selectedCategories.length > 0) {
+          // For now, just search with tags
+          params.tags = selectedCategories.join(',')
+        }
+        
+        const data = await productService.getProducts(params)
+        setProducts(data.products || [])
+      } catch (error) {
+        console.error('Error fetching products:', error)
+        setProducts([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [searchQuery, selectedCategories, selectedBrands, priceRange])
 
   useEffect(() => {
     setSelectedCategories(categoryParam ? [categoryParam] : [])
@@ -45,31 +88,7 @@ function ProductsPage() {
     'Gourmet'
   ]
 
-  const allProducts = [
-    { id: 1, category: 'Fruits & Vegetables', discount: 20, brand: 'fresho!', title: 'Organic Apples - Red', price: '50.00', oldPrice: '70.00' },
-    { id: 2, category: 'Fruits & Vegetables', discount: 15, brand: 'fresho!', title: 'Fresh Bananas - Robusta', price: '40.00', oldPrice: '55.00' },
-    { id: 3, category: 'Fruits & Vegetables', discount: 25, brand: 'fresho!', title: 'Tomatoes - Local', price: '25.00', oldPrice: '35.00' },
-    { id: 4, category: 'Fruits & Vegetables', discount: 10, brand: 'fresho!', title: 'Onions - Bangalore Rose', price: '30.00', oldPrice: '35.00' },
-    { id: 5, category: 'Fruits & Vegetables', brand: 'fresho!', title: 'Potatoes', price: '28.00' },
-    { id: 6, category: 'Dairy & Bakery', discount: 18, brand: 'Amul', title: 'Butter - Salted', price: '45.00', oldPrice: '55.00' },
-    { id: 7, category: 'Dairy & Bakery', brand: 'Mother Dairy', title: 'Milk - Toned', price: '28.00' },
-    { id: 8, category: 'Dairy & Bakery', discount: 12, brand: 'Britannia', title: 'Bread - Whole Wheat', price: '22.00', oldPrice: '25.00' },
-    { id: 9, category: 'Staples', brand: 'Tata', title: 'Salt - Iodised', price: '22.00' },
-    { id: 10, category: 'Staples', brand: 'Fortune', title: 'Rice - Basmati', price: '180.00' },
-    { id: 11, category: 'Snacks', discount: 30, brand: 'Lay\'s', title: 'Chips - Classic Salted', price: '20.00', oldPrice: '30.00' },
-    { id: 12, category: 'Snacks', brand: 'Haldiram', title: 'Bhujia', price: '40.00' },
-  ]
-
-  const filteredProducts = allProducts.filter(product => {
-    const matchesSearch = searchQuery ? 
-      product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.brand.toLowerCase().includes(searchQuery.toLowerCase())
-      : true
-    const matchesCategory = selectedCategories.length > 0 
-      ? selectedCategories.includes(product.category) 
-      : true
-    return matchesSearch && matchesCategory
-  })
+  const brands = ['fresho!', 'Amul', 'Mother Dairy', 'Britannia', 'Tata', 'Fortune', 'Aashirvaad']
 
   const getPageTitle = () => {
     if (searchQuery && selectedCategories.length > 0) {
@@ -90,6 +109,20 @@ function ProductsPage() {
         return [...prev, category]
       }
     })
+  }
+
+  const handleBrandToggle = (brand) => {
+    setSelectedBrands(prev => {
+      if (prev.includes(brand)) {
+        return prev.filter(b => b !== brand)
+      } else {
+        return [...prev, brand]
+      }
+    })
+  }
+
+  const handlePriceFilter = (min, max) => {
+    setPriceRange({ min, max })
   }
 
   const FilterSection = ({ title, sectionKey, children }) => (
@@ -165,19 +198,38 @@ function ProductsPage() {
 
               {/* Brands */}
               <FilterSection title="Brands" sectionKey="brands">
-                <CheckboxOption label="fresho!" />
-                <CheckboxOption label="Amul" />
-                <CheckboxOption label="Mother Dairy" />
-                <CheckboxOption label="Britannia" />
-                <CheckboxOption label="Tata" />
+                {brands.map((brand) => (
+                  <CheckboxOption 
+                    key={brand}
+                    label={brand}
+                    checked={selectedBrands.includes(brand)}
+                    onChange={() => handleBrandToggle(brand)}
+                  />
+                ))}
               </FilterSection>
 
               {/* Price */}
               <FilterSection title="Price" sectionKey="price">
-                <CheckboxOption label="Under ₹50" />
-                <CheckboxOption label="₹50 - ₹100" />
-                <CheckboxOption label="₹100 - ₹200" />
-                <CheckboxOption label="Above ₹200" />
+                <CheckboxOption 
+                  label="Under ₹50" 
+                  checked={priceRange.max === 50}
+                  onChange={() => handlePriceFilter(null, 50)}
+                />
+                <CheckboxOption 
+                  label="₹50 - ₹100"
+                  checked={priceRange.min === 50 && priceRange.max === 100}
+                  onChange={() => handlePriceFilter(50, 100)}
+                />
+                <CheckboxOption 
+                  label="₹100 - ₹200"
+                  checked={priceRange.min === 100 && priceRange.max === 200}
+                  onChange={() => handlePriceFilter(100, 200)}
+                />
+                <CheckboxOption 
+                  label="Above ₹200"
+                  checked={priceRange.min === 200}
+                  onChange={() => handlePriceFilter(200, null)}
+                />
               </FilterSection>
 
               {/* Discount */}
@@ -195,18 +247,25 @@ function ProductsPage() {
           <div className="col-span-1 md:col-span-3">
             <div className="mb-6">
               <h1 className="text-3xl font-bold text-gray-900">{getPageTitle()}</h1>
-              <p className="text-sm text-gray-600 mt-1">{filteredProducts.length} products found</p>
+              <p className="text-sm text-gray-600 mt-1">
+                {loading ? 'Loading...' : `${products.length} products found`}
+              </p>
             </div>
 
-            {filteredProducts.length > 0 ? (
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">Loading products...</p>
+              </div>
+            ) : products.length > 0 ? (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} {...product} />
+                {products.map((product) => (
+                  <ProductCard key={product._id} product={product} />
                 ))}
               </div>
             ) : (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg">No products found</p>
+                <p className="text-gray-400 text-sm mt-2">Try adjusting your filters or search query</p>
               </div>
             )}
           </div>

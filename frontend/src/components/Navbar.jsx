@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { Search, ShoppingCart, User } from 'lucide-react'
 import { openAuthModal, logout } from '../store/slices/authSlice'
+import { fetchCart } from '../store/slices/cartSlice'
 
 function Navbar() {
   const [selectedLocation, setSelectedLocation] = useState('Mumbai')
@@ -11,6 +12,13 @@ function Navbar() {
   const dispatch = useDispatch()
   const { isAuthenticated, user } = useSelector((state) => state.auth)
   const { totalItems } = useSelector((state) => state.cart)
+
+  // Fetch cart when user logs in
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchCart())
+    }
+  }, [dispatch, isAuthenticated])
 
   const handleLocationClick = () => {
     const newLocation = prompt('Enter your location:', selectedLocation)

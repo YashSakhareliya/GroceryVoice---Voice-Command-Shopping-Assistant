@@ -1,30 +1,48 @@
 import { useDispatch, useSelector } from 'react-redux'
 import { X } from 'lucide-react'
-import { closeAuthModal, toggleAuthMode, loginSuccess } from '../store/slices/authSlice'
+import { closeAuthModal, toggleAuthMode, registerUser, loginUser, clearError } from '../store/slices/authSlice'
 import { useState } from 'react'
 
 function AuthModal() {
   const dispatch = useDispatch()
-  const { isModalOpen, isLogin } = useSelector((state) => state.auth)
+  const { isModalOpen, isLogin, loading, error } = useSelector((state) => state.auth)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
 
   if (!isModalOpen) return null
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Simple mock authentication
-    if (email && password) {
-      dispatch(loginSuccess({ email, name: email.split('@')[0] }))
-      setEmail('')
-      setPassword('')
+    
+    if (isLogin) {
+      // Login
+      await dispatch(loginUser({ email, password }))
+    } else {
+      // Register
+      await dispatch(registerUser({ email, password, firstName, lastName }))
     }
+    
+    // Clear form on success
+    setEmail('')
+    setPassword('')
+    setFirstName('')
+    setLastName('')
   }
 
   const handleClose = () => {
     dispatch(closeAuthModal())
+    dispatch(clearError())
     setEmail('')
     setPassword('')
+    setFirstName('')
+    setLastName('')
+  }
+
+  const handleToggleMode = () => {
+    dispatch(toggleAuthMode())
+    dispatch(clearError())
   }
 
   return (
@@ -82,7 +100,34 @@ function AuthModal() {
           </h2>
           <p className="text-sm text-gray-400 mb-6">Using Email & Password</p>
 
+          {error && (
+            <div className="mb-4 p-3 bg-red-500 bg-opacity-20 border border-red-500 rounded-md text-sm text-red-200">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
+            {!isLogin && (
+              <>
+                <input
+                  type="text"
+                  placeholder="First Name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-light-green"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Last Name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-light-green"
+                  required
+                />
+              </>
+            )}
+
             <input
               type="email"
               placeholder="Enter Email"
@@ -99,19 +144,21 @@ function AuthModal() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-light-green"
               required
+              minLength={6}
             />
 
             <button
               type="submit"
-              className="w-full bg-brand-red hover:bg-red-600 text-white font-semibold py-3 rounded-md transition-colors"
+              disabled={loading}
+              className="w-full bg-brand-red hover:bg-red-600 text-white font-semibold py-3 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLogin ? 'Login' : 'Sign Up'}
+              {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Sign Up')}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <button
-              onClick={() => dispatch(toggleAuthMode())}
+              onClick={handleToggleMode}
               className="text-sm text-gray-400 hover:text-white"
             >
               {isLogin ? "Don't have an account? " : "Already have an account? "}
@@ -138,3 +185,4 @@ function AuthModal() {
 }
 
 export default AuthModal
+

@@ -1,85 +1,175 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { cartService } from '../../services/cartService'
 
-// Load initial state from localStorage
-const loadCartState = () => {
-  try {
-    const serializedState = localStorage.getItem('cart')
-    if (serializedState === null) {
-      return {
-        items: [],
-        totalItems: 0,
-        totalPrice: 0,
-      }
-    }
-    return JSON.parse(serializedState)
-  } catch (err) {
-    return {
-      items: [],
-      totalItems: 0,
-      totalPrice: 0,
+// Async thunks
+export const fetchCart = createAsyncThunk(
+  'cart/fetch',
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await cartService.getCart()
+      return data.shoppingList
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch cart')
     }
   }
-}
+)
 
-// Save state to localStorage
-const saveCartState = (state) => {
-  try {
-    const serializedState = JSON.stringify({
-      items: state.items,
-      totalItems: state.totalItems,
-      totalPrice: state.totalPrice,
-    })
-    localStorage.setItem('cart', serializedState)
-  } catch (err) {
-    // Ignore write errors
+export const addToCartAsync = createAsyncThunk(
+  'cart/add',
+  async ({ productId, quantity = 1 }, { rejectWithValue }) => {
+    try {
+      const data = await cartService.addToCart(productId, quantity)
+      return data.shoppingList
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to add to cart')
+    }
   }
+)
+
+export const updateQuantityAsync = createAsyncThunk(
+  'cart/updateQuantity',
+  async ({ productId, quantity }, { rejectWithValue }) => {
+    try {
+      const data = await cartService.updateQuantity(productId, quantity)
+      return data.shoppingList
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to update quantity')
+    }
+  }
+)
+
+export const removeFromCartAsync = createAsyncThunk(
+  'cart/remove',
+  async (productId, { rejectWithValue }) => {
+    try {
+      const data = await cartService.removeFromCart(productId)
+      return data.shoppingList
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to remove from cart')
+    }
+  }
+)
+
+export const clearCartAsync = createAsyncThunk(
+  'cart/clear',
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await cartService.clearCart()
+      return data.shoppingList
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to clear cart')
+    }
+  }
+)
+
+const initialState = {
+  items: [],
+  totalItems: 0,
+  totalPrice: 0,
+  loading: false,
+  error: null,
 }
 
-const initialState = loadCartState()
+const calculateTotals = (items) => {
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
+  const totalPrice = items.reduce((sum, item) => {
+    const price = item.product?.basePrice || 0
+    return sum + (price * item.quantity)
+  }, 0)
+  return { totalItems, totalPrice }
+}
 
 const cartSlice = createSlice({
   name: 'cart',
   initialState,
   reducers: {
-    addToCart: (state, action) => {
-      const existingItem = state.items.find(item => item.id === action.payload.id)
-      if (existingItem) {
-        existingItem.quantity += 1
-      } else {
-        state.items.push({ ...action.payload, quantity: 1 })
-      }
-      state.totalItems += 1
-      state.totalPrice += parseFloat(action.payload.price)
-      saveCartState(state)
+    clearError: (state) => {
+      state.error = null
     },
-    removeFromCart: (state, action) => {
-      const item = state.items.find(item => item.id === action.payload)
-      if (item) {
-        state.totalItems -= item.quantity
-        state.totalPrice -= parseFloat(item.price) * item.quantity
-        state.items = state.items.filter(item => item.id !== action.payload)
-      }
-      saveCartState(state)
-    },
-    updateQuantity: (state, action) => {
-      const { id, quantity } = action.payload
-      const item = state.items.find(item => item.id === id)
-      if (item) {
-        const diff = quantity - item.quantity
-        state.totalItems += diff
-        state.totalPrice += parseFloat(item.price) * diff
-        item.quantity = quantity
-      }
-      saveCartState(state)
-    },
-    clearCart: (state) => {
-      state.items = []
-      state.totalItems = 0
-      state.totalPrice = 0
-      saveCartState(state)
-    },
+  },
+  extraReducers: (builder) => {
+    builder
+      // Fetch cart
+      .addCase(fetchCart.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchCart.fulfilled, (state, action) => {
+        state.loading = false
+        state.items = action.payload?.items || []
+        const totals = calculateTotals(state.items)
+        state.totalItems = totals.totalItems
+        state.totalPrice = totals.totalPrice
+      })
+      .addCase(fetchCart.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      // Add to cart
+      .addCase(addToCartAsync.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(addToCartAsync.fulfilled, (state, action) => {
+        state.loading = false
+        state.items = action.payload?.items || []
+        const totals = calculateTotals(state.items)
+        state.totalItems = totals.totalItems
+        state.totalPrice = totals.totalPrice
+      })
+      .addCase(addToCartAsync.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      // Update quantity
+      .addCase(updateQuantityAsync.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(updateQuantityAsync.fulfilled, (state, action) => {
+        state.loading = false
+        state.items = action.payload?.items || []
+        const totals = calculateTotals(state.items)
+        state.totalItems = totals.totalItems
+        state.totalPrice = totals.totalPrice
+      })
+      .addCase(updateQuantityAsync.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      // Remove from cart
+      .addCase(removeFromCartAsync.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(removeFromCartAsync.fulfilled, (state, action) => {
+        state.loading = false
+        state.items = action.payload?.items || []
+        const totals = calculateTotals(state.items)
+        state.totalItems = totals.totalItems
+        state.totalPrice = totals.totalPrice
+      })
+      .addCase(removeFromCartAsync.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      // Clear cart
+      .addCase(clearCartAsync.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(clearCartAsync.fulfilled, (state, action) => {
+        state.loading = false
+        state.items = []
+        state.totalItems = 0
+        state.totalPrice = 0
+      })
+      .addCase(clearCartAsync.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
   },
 })
 
-export const { addToCart, removeFromCart, updateQuantity, clearCart } = cartSlice.actions
+export const { clearError } = cartSlice.actions
 export default cartSlice.reducer

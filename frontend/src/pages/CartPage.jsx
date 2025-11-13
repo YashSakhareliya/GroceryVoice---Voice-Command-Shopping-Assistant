@@ -1,22 +1,27 @@
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Minus, Plus, Trash2 } from 'lucide-react'
-import { removeFromCart, updateQuantity } from '../store/slices/cartSlice'
+import { removeFromCartAsync, updateQuantityAsync, fetchCart } from '../store/slices/cartSlice'
 import { openAuthModal } from '../store/slices/authSlice'
 import Navbar from '../components/Navbar'
 import CategoryNav from '../components/CategoryNav'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { orderService } from '../services/orderService'
 
 function CartPage() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { isAuthenticated } = useSelector((state) => state.auth)
   const { items, totalItems, totalPrice } = useSelector((state) => state.cart)
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) {
       dispatch(openAuthModal({ isLogin: true }))
       navigate('/')
+    } else {
+      // Fetch latest cart from backend
+      dispatch(fetchCart())
     }
   }, [isAuthenticated, dispatch, navigate])
 
@@ -24,15 +29,43 @@ function CartPage() {
     return null
   }
 
-  const handleQuantityChange = (id, currentQuantity, change) => {
+  const handleQuantityChange = async (id, currentQuantity, change) => {
     const newQuantity = currentQuantity + change
     if (newQuantity > 0) {
-      dispatch(updateQuantity({ id, quantity: newQuantity }))
+      await dispatch(updateQuantityAsync({ id, quantity: newQuantity }))
     }
   }
 
-  const handleDelete = (id) => {
-    dispatch(removeFromCart(id))
+  const handleDelete = async (id) => {
+    await dispatch(removeFromCartAsync(id))
+  }
+
+  const handlePlaceOrder = async () => {
+    if (items.length === 0) return
+    
+    setIsPlacingOrder(true)
+    try {
+      const orderData = {
+        items: items.map(item => ({
+          product: item.id, // product ID from backend
+          quantity: item.quantity
+        })),
+        totalAmount: totalPrice + deliveryFee
+      }
+      
+      const order = await orderService.createOrder(orderData)
+      
+      // Show success message
+      alert(`Order placed successfully! Order ID: ${order._id}`)
+      
+      // Navigate to orders page or home
+      navigate('/')
+    } catch (error) {
+      console.error('Error placing order:', error)
+      alert('Failed to place order. Please try again.')
+    } finally {
+      setIsPlacingOrder(false)
+    }
   }
 
   const deliveryFee = totalPrice > 200 ? 0 : 40
@@ -189,8 +222,12 @@ function CartPage() {
                   </div>
                 </div>
 
-                <button className="w-full bg-brand-red text-white py-3 rounded-md font-semibold hover:bg-red-600 transition-colors">
-                  Place Order
+                <button 
+                  onClick={handlePlaceOrder}
+                  disabled={isPlacingOrder || items.length === 0}
+                  className="w-full bg-brand-red text-white py-3 rounded-md font-semibold hover:bg-red-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {isPlacingOrder ? 'Placing Order...' : 'Place Order'}
                 </button>
 
                 {totalPrice < 200 && (

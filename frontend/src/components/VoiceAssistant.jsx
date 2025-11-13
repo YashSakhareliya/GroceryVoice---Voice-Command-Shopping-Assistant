@@ -107,18 +107,22 @@ function VoiceAssistant() {
     }
   }
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     handleStopListening()
     const finalTranscript = transcript + interimTranscript
     if (finalTranscript.trim()) {
-      // For now, just log to console
-      console.log('Voice Command:', finalTranscript.trim())
-      // TODO: Send to backend
-      // fetch('/api/voice-command', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ command: finalTranscript.trim() })
-      // })
+      try {
+        // Import at top: import { voiceService } from '../services/voiceService'
+        const { voiceService } = await import('../services/voiceService')
+        const response = await voiceService.processCommand(finalTranscript.trim())
+        console.log('Voice Command Response:', response)
+        
+        // TODO: Handle different response types (add to cart, search, etc.)
+        // For now, just log the response
+        
+      } catch (error) {
+        console.error('Voice command error:', error.response?.data?.message || error.message)
+      }
       
       // Reset and close
       setTranscript('')
