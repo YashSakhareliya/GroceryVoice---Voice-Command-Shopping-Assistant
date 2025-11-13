@@ -4,7 +4,8 @@ import {
   addToShoppingList, 
   removeFromShoppingList, 
   clearShoppingList, 
-  getShoppingList 
+  getShoppingList,
+  updateProductQuantity 
 } from './shoppingListController.js';
 
 /**
@@ -55,17 +56,29 @@ const parseVoiceCommand = (text) => {
 
   // Extract product name (after add/remove/find keywords)
   const productPatterns = [
-    /(?:add|put|include|insert)\s+(?:\d+\s+)?(.+?)(?:\s+to|\s*$)/,
-    /(?:remove|delete|take out|drop)\s+(?:\d+\s+)?(.+?)(?:\s+from|\s*$)/,
-    /(?:find|search|show|get|look for)\s+(.+?)(?:\s+in|\s*$)/,
+    /(?:add|put|include|insert)\s+(?:\d+\s+)?(.+?)(?:\s+to(?:\s+(?:my|the))?\s+(?:list|cart)|$)/i,
+    /(?:remove|delete|take out|drop)\s+(?:\d+\s+)?(.+?)(?:\s+from(?:\s+(?:my|the))?\s+(?:list|cart)|$)/i,
+    /(?:find|search|show|get|look for)\s+(.+?)(?:\s+in(?:\s+(?:my|the))?\s+(?:store|shop)|$)/i,
   ];
 
   for (const pattern of productPatterns) {
     const match = lowerText.match(pattern);
     if (match && match[1]) {
-      product = match[1].trim();
+      product = match[1]
+        .replace(/\b(to|from|the|a|an|my|in|please|some)\b/gi, '') // Remove filler words
+        .replace(/\s+/g, ' ') // Normalize spaces
+        .trim();
       break;
     }
+  }
+
+  // If no pattern matched, try to extract product after quantity
+  if (!product && quantityMatch) {
+    const afterQuantity = lowerText.substring(lowerText.indexOf(quantityMatch[0]) + quantityMatch[0].length).trim();
+    product = afterQuantity
+      .replace(/\b(to|from|the|a|an|my|in|please|some|list|cart)\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   // Extract brand (if mentioned)
@@ -94,22 +107,80 @@ const parseVoiceCommand = (text) => {
  */
 const findProductByName = async (productName, brand = null) => {
   try {
+    // Clean up the product name
+    const cleanProductName = productName
+      .replace(/\b(to|from|the|a|an|my|in)\b/gi, '') // Remove common words
+      .trim();
+
+    if (!cleanProductName) {
+      return null;
+    }
+
+    // Split into individual words for better matching
+    const words = cleanProductName.split(/\s+/).filter(word => word.length > 1);
+
+    // Build query with multiple search patterns
+    const searchPatterns = [
+      // Exact match (highest priority)
+      { name: { $regex: `^${cleanProductName}$`, $options: 'i' } },
+      // Starts with
+      { name: { $regex: `^${cleanProductName}`, $options: 'i' } },
+      // Contains all words
+      ...words.map(word => ({ name: { $regex: word, $options: 'i' } })),
+    ];
+
     const query = {
-      name: { $regex: productName, $options: 'i' }
+      $or: searchPatterns
     };
 
     if (brand) {
       query.brand = { $regex: brand, $options: 'i' };
     }
 
-    const products = await Product.find(query).limit(5);
+    const products = await Product.find(query).limit(10);
     
     if (products.length === 0) {
       return null;
     }
 
-    // Return the best match (first one)
-    return products[0];
+    // Score and rank products by relevance
+    const scoredProducts = products.map(product => {
+      let score = 0;
+      const productNameLower = product.name.toLowerCase();
+      const searchLower = cleanProductName.toLowerCase();
+
+      // Exact match - highest score
+      if (productNameLower === searchLower) {
+        score += 100;
+      }
+      // Starts with search term
+      else if (productNameLower.startsWith(searchLower)) {
+        score += 50;
+      }
+      // Contains search term
+      else if (productNameLower.includes(searchLower)) {
+        score += 30;
+      }
+
+      // Check how many words match
+      words.forEach(word => {
+        if (productNameLower.includes(word.toLowerCase())) {
+          score += 10;
+        }
+      });
+
+      // Brand match bonus
+      if (brand && product.brand && product.brand.toLowerCase().includes(brand.toLowerCase())) {
+        score += 20;
+      }
+
+      return { product, score };
+    });
+
+    // Sort by score (highest first) and return best match
+    scoredProducts.sort((a, b) => b.score - a.score);
+    
+    return scoredProducts[0].product;
   } catch (error) {
     console.error('Error finding product:', error);
     return null;
@@ -209,35 +280,89 @@ export const processVoiceCommand = async (req, res) => {
           });
         }
 
-        // Use existing removeFromShoppingList service
-        req.params = { productId: product._id.toString() };
+        // Check if user wants to remove specific quantity or entire item
+        const removeQuantity = parsed.entities.quantity;
 
-        // Call the existing service
-        await removeFromShoppingList(req, {
-          json: (data) => {
-            if (!data.success) {
+        // Get user's shopping list to check current quantity
+        const shoppingList = await ShoppingList.findOne({ user: req.user._id });
+        
+        if (!shoppingList) {
+          return res.status(404).json({ 
+            success: false,
+            message: 'Shopping list not found' 
+          });
+        }
+
+        const existingItem = shoppingList.items.find(
+          item => item.product.toString() === product._id.toString()
+        );
+
+        if (!existingItem) {
+          return res.json({
+            success: false,
+            message: `${product.name} is not in your shopping list`,
+            parsed,
+          });
+        }
+
+        // If quantity to remove is less than current quantity, update quantity
+        if (removeQuantity < existingItem.quantity && removeQuantity > 0) {
+          // Update quantity
+          req.body = {
+            productId: product._id.toString(),
+            quantity: existingItem.quantity - removeQuantity
+          };
+          
+          await updateProductQuantity(req, {
+            json: (data) => {
               return res.json({
-                success: false,
-                message: `${product.name} was not in your shopping list`,
+                success: true,
+                message: `Removed ${removeQuantity} ${product.name} from your shopping list. ${data.shoppingList.items.find(i => i.product._id.toString() === product._id.toString()).quantity} remaining`,
                 parsed,
+                action: 'quantity_reduced',
+                product: {
+                  id: product._id,
+                  name: product.name,
+                  quantityRemoved: removeQuantity,
+                  quantityRemaining: data.shoppingList.items.find(i => i.product._id.toString() === product._id.toString()).quantity,
+                },
+                shoppingList: data.shoppingList,
               });
-            }
-            return res.json({
-              success: true,
-              message: `Removed ${product.name} from your shopping list`,
-              parsed,
-              action: 'removed',
-              product: {
-                id: product._id,
-                name: product.name,
-              },
-              shoppingList: data.shoppingList,
-            });
-          },
-          status: (code) => ({
-            json: (data) => res.status(code).json(data)
-          })
-        });
+            },
+            status: (code) => ({
+              json: (data) => res.status(code).json(data)
+            })
+          });
+        } else {
+          // Remove entire item from list
+          req.params = { productId: product._id.toString() };
+
+          await removeFromShoppingList(req, {
+            json: (data) => {
+              if (!data.success) {
+                return res.json({
+                  success: false,
+                  message: `${product.name} was not in your shopping list`,
+                  parsed,
+                });
+              }
+              return res.json({
+                success: true,
+                message: `Removed ${product.name} from your shopping list`,
+                parsed,
+                action: 'removed',
+                product: {
+                  id: product._id,
+                  name: product.name,
+                },
+                shoppingList: data.shoppingList,
+              });
+            },
+            status: (code) => ({
+              json: (data) => res.status(code).json(data)
+            })
+          });
+        }
         break;
       }
 
