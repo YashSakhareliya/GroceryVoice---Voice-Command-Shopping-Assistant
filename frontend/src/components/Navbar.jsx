@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search, ShoppingCart } from 'lucide-react'
 
 function Navbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState('Mumbai')
+  const [searchQuery, setSearchQuery] = useState('')
+  const navigate = useNavigate()
 
   const handleLocationClick = () => {
     const newLocation = prompt('Enter your location:', selectedLocation)
@@ -12,27 +14,40 @@ function Navbar() {
     }
   }
 
+  const handleSearch = (e) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery)}`)
+    }
+  }
+
+  const handleLogoClick = () => {
+    navigate('/')
+  }
+
   return (
     <nav className="w-full bg-white py-3 shadow-sm">
       <div className="max-w-7xl mx-auto px-8 flex items-center gap-4">
         {/* Logo */}
-        <div className="flex items-center">
+        <div className="flex items-center cursor-pointer" onClick={handleLogoClick}>
           <h1 className="text-dark-green font-bold text-2xl">
             GroceryVoice
           </h1>
         </div>
 
         {/* Search Bar */}
-        <div className="flex-1 max-w-2xl relative">
+        <form onSubmit={handleSearch} className="flex-1 max-w-2xl relative">
           <div className="relative flex items-center">
             <Search className="absolute left-3 text-gray-400" size={20} />
             <input
               type="text"
               placeholder="Search for Products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-gray-400 text-sm"
             />
           </div>
-        </div>
+        </form>
 
         {/* Delivery Info */}
         <div className="flex flex-col items-start whitespace-nowrap">

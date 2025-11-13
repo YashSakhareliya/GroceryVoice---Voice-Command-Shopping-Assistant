@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 function CategoryNav() {
+  const navigate = useNavigate()
   const categories = [
     'Fruits & Vegetables',
     'Dairy & Bakery',
@@ -71,13 +73,13 @@ function CategoryNav() {
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {categories.map((category, index) => (
-              <a
+              <button
                 key={index}
-                href="#"
+                onClick={() => navigate(`/products?category=${encodeURIComponent(category)}`)}
                 className="text-sm text-gray-700 hover:text-dark-green font-medium whitespace-nowrap transition-colors"
               >
                 {category}
-              </a>
+              </button>
             ))}
           </div>
 
