@@ -28,7 +28,7 @@ function ProductCard({
 
   // Calculate display price
   const displayPrice = product.finalPrice || product.basePrice
-  const hasDiscount = product.discountedPrice && product.discountedPrice < product.basePrice
+  const hasDiscount = product.appliedDiscount
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
@@ -39,9 +39,9 @@ function ProductCard({
           alt={product.name}
           className="w-full h-48 object-cover"
         />
-        {product.discount && (
+        {product.appliedDiscount && (
           <span className="absolute top-2 left-2 bg-dark-green text-white text-xs font-semibold px-2 py-1 rounded">
-            {product.discount}% OFF
+            {product.appliedDiscount.discountValue}{product.appliedDiscount.discountType == "percentage" ? '%' : ''} OFF
           </span>
         )}
       </div>
