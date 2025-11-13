@@ -1,7 +1,12 @@
 import express from 'express';
-import { getProducts, getProductsByCategory, getProductById } from '../controllers/userController.js';
+import { getCategories, getProducts, getProductsByCategory, getProductById } from '../controllers/userController.js';
 
 const router = express.Router();
+
+// @route   GET /api/user/categories
+// @desc    Get all categories
+// @access  Public
+router.get('/categories', getCategories);
 
 // @route   GET /api/user/products
 // @desc    Get all products with discounts applied

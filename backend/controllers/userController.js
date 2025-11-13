@@ -2,6 +2,24 @@ import Product from '../models/product.js';
 import Category from '../models/category.js';
 import { calculateProductsDiscount } from '../utils/calculateDiscount.js';
 
+// @desc    Get all categories
+// @route   GET /api/user/categories
+// @access  Public
+export const getCategories = async (req, res) => {
+  try {
+    const categories = await Category.find().sort({ name: 1 });
+
+    res.json({
+      success: true,
+      categories,
+    });
+
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
 // @desc    Get all products with discounts applied
 // @route   GET /api/user/products
 // @access  Public
