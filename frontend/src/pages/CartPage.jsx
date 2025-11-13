@@ -186,18 +186,11 @@ function CartPage() {
                         <div className="text-xs text-gray-600">9 mins</div>
                       </div>
                     </label>
-                    <label className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                      <input type="radio" name="delivery" className="accent-light-green" />
-                      <div className="flex-1">
-                        <div className="font-semibold text-sm">Schedule delivery</div>
-                        <div className="text-xs text-gray-600">Get it in 2 hrs</div>
-                      </div>
-                    </label>
                   </div>
                 </div>
 
                 <button className="w-full bg-brand-red text-white py-3 rounded-md font-semibold hover:bg-red-600 transition-colors">
-                  Proceed to Checkout
+                  Place Order
                 </button>
 
                 {totalPrice < 200 && (

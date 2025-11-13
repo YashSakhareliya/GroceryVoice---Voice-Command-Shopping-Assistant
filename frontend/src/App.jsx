@@ -5,12 +5,14 @@ import HomePage from './pages/HomePage'
 import ProductsPage from './pages/ProductsPage'
 import CartPage from './pages/CartPage'
 import AuthModal from './components/AuthModal'
+import VoiceAssistant from './components/VoiceAssistant'
 
 function App() {
   return (
     <Provider store={store}>
       <Router>
         <AuthModal />
+        <VoiceAssistant />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<ProductsPage />} />
