@@ -20,7 +20,6 @@ const categorySchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Admin',
-    required: true,
   },
 }, {
   timestamps: true,
