@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+@theme {
+  --color-dark-green: #1d4a20;
+  --color-light-green: #84cc16;
+  --color-brand-red: #ef4444;
+}
+
+body {
+  background-color: white;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
