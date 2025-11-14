@@ -8,9 +8,11 @@ import api from '../services/api'
 
 function HomePage() {
   const bestDealsRef = useRef(null)
+  const frequentlyBoughtRef = useRef(null)
   const dailyStaplesRef = useRef(null)
 
   const [bestDealsProducts, setBestDealsProducts] = useState([])
+  const [frequentlyBoughtProducts, setFrequentlyBoughtProducts] = useState([])
   const [dailyStaplesProducts, setDailyStaplesProducts] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -24,6 +26,11 @@ function HomePage() {
           params: { limit: 10 } 
         })
         
+        // Fetch frequently purchased items from history
+        const historyResponse = await api.get('/suggestions/history', { 
+          params: { limit: 10 } 
+        }).catch(() => ({ data: { suggestions: [] } })) // Handle unauthorized gracefully
+        
         // Fetch regular products for daily staples
         const staplesResponse = await productService.getProducts({ 
           limit: 10,
@@ -31,11 +38,13 @@ function HomePage() {
         })
         
         setBestDealsProducts(dealsResponse.data.suggestions || [])
+        setFrequentlyBoughtProducts(historyResponse.data.suggestions || [])
         setDailyStaplesProducts(staplesResponse.products || [])
       } catch (error) {
         console.error('Error fetching products:', error)
         // Keep empty arrays if fetch fails
         setBestDealsProducts([])
+        setFrequentlyBoughtProducts([])
         setDailyStaplesProducts([])
       } finally {
         setLoading(false)
@@ -122,6 +131,48 @@ function HomePage() {
             )}
           </div>
         </section>
+
+        {/* Frequently Bought Section - Based on History */}
+        {frequentlyBoughtProducts.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Frequently Bought by You</h2>
+                <p className="text-sm text-gray-600">Based on your order history</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <a href="#" className="text-sm text-dark-green font-semibold hover:underline">
+                  View All
+                </a>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => scroll(frequentlyBoughtRef, 'left')}
+                    className="bg-white border border-gray-300 rounded-full p-1.5 hover:bg-gray-100"
+                  >
+                    <ChevronLeft size={18} className="text-gray-600" />
+                  </button>
+                  <button
+                    onClick={() => scroll(frequentlyBoughtRef, 'right')}
+                    className="bg-white border border-gray-300 rounded-full p-1.5 hover:bg-gray-100"
+                  >
+                    <ChevronRight size={18} className="text-gray-600" />
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div
+              ref={frequentlyBoughtRef}
+              className="flex gap-4 overflow-x-auto scrollbar-hide pb-2"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {frequentlyBoughtProducts.map((product) => (
+                <div key={product._id} className="flex-none w-64">
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Your Daily Staples Section */}
         <section className="mb-8">
