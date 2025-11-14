@@ -182,40 +182,40 @@ function VoiceAssistant() {
       {/* Floating Voice Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 bg-dark-green text-white p-4 rounded-full shadow-lg hover:bg-opacity-90 transition-all z-40 hover:scale-110"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 bg-dark-green text-white p-3 sm:p-4 rounded-full shadow-lg hover:bg-opacity-90 transition-all z-40 hover:scale-110"
         title="Voice Assistant"
       >
-        <Mic size={24} />
+        <Mic size={20} className="sm:w-6 sm:h-6" />
       </button>
 
       {/* Voice Assistant Modal */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50">
-          <div className="bg-white rounded-lg shadow-2xl w-80 overflow-hidden border border-gray-200">
+        <div className="fixed bottom-16 right-2 sm:bottom-24 sm:right-6 z-50 max-w-[calc(100vw-1rem)] sm:max-w-none">
+          <div className="bg-white rounded-lg shadow-2xl w-full sm:w-80 overflow-hidden border border-gray-200">
             {/* Header */}
-            <div className="bg-dark-green text-white px-6 py-4 flex items-center justify-between">
-              <h3 className="font-semibold text-lg">Voice Assistant</h3>
+            <div className="bg-dark-green text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+              <h3 className="font-semibold text-base sm:text-lg">Voice Assistant</h3>
               <button onClick={handleClose} className="hover:bg-white hover:bg-opacity-20 rounded p-1">
-                <X size={20} />
+                <X size={18} className="sm:w-5 sm:h-5" />
               </button>
             </div>
 
             {/* Body */}
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {/* Microphone Animation */}
-              <div className="flex justify-center mb-6">
+              <div className="flex justify-center mb-4 sm:mb-6">
                 <div className={`relative ${isListening ? 'animate-pulse' : ''}`}>
-                  <div className={`w-24 h-24 rounded-full flex items-center justify-center ${
+                  <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center ${
                     isListening ? 'bg-red-100' : 'bg-gray-100'
                   }`}>
                     {isListening ? (
-                      <MicOff size={48} className="text-red-600" />
+                      <MicOff size={40} className="text-red-600 sm:w-12 sm:h-12" />
                     ) : (
-                      <Mic size={48} className="text-gray-600" />
+                      <Mic size={40} className="text-gray-600 sm:w-12 sm:h-12" />
                     )}
                   </div>
                   {isListening && (
-                    <span className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 text-xs text-red-600 font-semibold whitespace-nowrap">
+                    <span className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 text-[10px] sm:text-xs text-red-600 font-semibold whitespace-nowrap">
                       Listening...
                     </span>
                   )}
@@ -223,14 +223,14 @@ function VoiceAssistant() {
               </div>
 
               {/* Transcript Display */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-6 min-h-[120px] max-h-[200px] overflow-y-auto">
+              <div className="bg-gray-50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 min-h-[100px] sm:min-h-[120px] max-h-[180px] sm:max-h-[200px] overflow-y-auto">
                 {transcript || interimTranscript ? (
-                  <p className="text-gray-800">
+                  <p className="text-gray-800 text-sm sm:text-base">
                     {transcript}
                     <span className="text-gray-400">{interimTranscript}</span>
                   </p>
                 ) : (
-                  <p className="text-gray-400 text-center">
+                  <p className="text-gray-400 text-center text-xs sm:text-sm">
                     Click the microphone to start speaking...
                   </p>
                 )}
@@ -238,33 +238,33 @@ function VoiceAssistant() {
 
               {/* Response Message */}
               {responseMessage && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-                  <p className="text-green-800 text-sm text-center">{responseMessage}</p>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-2.5 sm:p-3 mb-3 sm:mb-4">
+                  <p className="text-green-800 text-xs sm:text-sm text-center">{responseMessage}</p>
                 </div>
               )}
 
               {/* Controls */}
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 {!isListening ? (
                   <button
                     onClick={handleStartListening}
-                    className="flex-1 bg-dark-green text-white py-3 rounded-md font-semibold hover:bg-opacity-90 transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 bg-dark-green text-white py-2.5 sm:py-3 rounded-md font-semibold hover:bg-opacity-90 transition-colors flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base"
                   >
-                    <Mic size={18} />
+                    <Mic size={16} className="sm:w-[18px] sm:h-[18px]" />
                     Start Recording
                   </button>
                 ) : (
                   <>
                     <button
                       onClick={handleStopListening}
-                      className="flex-1 bg-red-600 text-white py-3 rounded-md font-semibold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 bg-red-600 text-white py-2.5 sm:py-3 rounded-md font-semibold hover:bg-red-700 transition-colors flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base"
                     >
-                      <MicOff size={18} />
+                      <MicOff size={16} className="sm:w-[18px] sm:h-[18px]" />
                       Stop
                     </button>
                     <button
                       onClick={handleContinue}
-                      className="flex-1 bg-light-green text-white py-3 rounded-md font-semibold hover:bg-opacity-90 transition-colors"
+                      className="flex-1 bg-light-green text-white py-2.5 sm:py-3 rounded-md font-semibold hover:bg-opacity-90 transition-colors text-sm sm:text-base"
                       disabled={!transcript && !interimTranscript}
                     >
                       Continue
@@ -273,7 +273,7 @@ function VoiceAssistant() {
                 )}
               </div>
 
-              <p className="text-xs text-gray-500 mt-4 text-center">
+              <p className="text-[10px] sm:text-xs text-gray-500 mt-3 sm:mt-4 text-center">
                 Speak clearly into your microphone. Recording will auto-stop after 3 seconds of silence.
               </p>
             </div>

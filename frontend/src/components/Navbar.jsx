@@ -54,89 +54,168 @@ function Navbar() {
 
   return (
     <nav className="w-full bg-white py-3 shadow-sm">
-      <div className="max-w-7xl mx-auto px-8 flex items-center gap-4">
-        {/* Logo */}
-        <div className="flex items-center cursor-pointer" onClick={handleLogoClick}>
-          <h1 className="text-dark-green font-bold text-2xl">
-            GroceryVoice
-          </h1>
-        </div>
-
-        {/* Search Bar */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-2xl relative">
-          <div className="relative flex items-center">
-            <Search className="absolute left-3 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search for Products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-gray-400 text-sm"
-            />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Desktop Layout */}
+        <div className="hidden md:flex items-center gap-4">
+          {/* Logo */}
+          <div className="flex items-center cursor-pointer" onClick={handleLogoClick}>
+            <h1 className="text-dark-green font-bold text-xl lg:text-2xl">
+              GroceryVoice
+            </h1>
           </div>
-        </form>
 
-        {/* Delivery Info */}
-        <div className="bg-black text-white px-4 py-1 rounded-md">
-          <div className="flex items-center gap-1 text-xs">
-            <span className="text-green-500">⚡</span>
-            <span className="font-semibold">Delivery in 5 mins</span>
-          </div>
-          <button 
-            onClick={handleLocationClick}
-            className="text-xs text-gray-300 hover:text-white hover:underline cursor-pointer"
-          >
-            {selectedLocation || 'Select Location'}
-          </button>
-        </div>
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="flex-1 max-w-2xl relative">
+            <div className="relative flex items-center">
+              <Search className="absolute left-3 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search for Products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-gray-400 text-sm"
+              />
+            </div>
+          </form>
 
-        {/* Login/Sign Up or Profile */}
-        {!isAuthenticated ? (
-          <button 
-            onClick={() => dispatch(openAuthModal({ isLogin: true }))}
-            className="bg-black text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-800 whitespace-nowrap"
-          >
-            Login/ Sign Up
-          </button>
-        ) : (
-          <div className="relative">
+          {/* Delivery Info */}
+          <div className="bg-black text-white px-4 py-1 rounded-md hidden lg:block">
+            <div className="flex items-center gap-1 text-xs">
+              <span className="text-green-500">⚡</span>
+              <span className="font-semibold">Delivery in 5 mins</span>
+            </div>
             <button 
-              onClick={handleProfileClick}
-              className="p-2 px-6 hover:bg-gray-100 rounded-full"
+              onClick={handleLocationClick}
+              className="text-xs text-gray-300 hover:text-white hover:underline cursor-pointer"
             >
-              <User size={24} className="text-gray-700" />
+              {selectedLocation || 'Select Location'}
             </button>
-            {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg border border-gray-200 z-10 overflow-hidden">
-                <button
-                  onClick={() => handleProfileAction('profile')}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Profile
-                </button>
-                <button
-                  onClick={() => handleProfileAction('logout')}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-200"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
           </div>
-        )}
 
-        {/* Cart Button */}
-        <button 
-          onClick={() => navigate('/cart')}
-          className="relative p-2 px-6 hover:bg-gray-100 rounded-full"
-        >
-          <ShoppingCart size={24} className="text-gray-700" />
-          {totalItems > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-              {totalItems}
-            </span>
+          {/* Login/Sign Up or Profile */}
+          {!isAuthenticated ? (
+            <button 
+              onClick={() => dispatch(openAuthModal({ isLogin: true }))}
+              className="bg-black text-white px-4 lg:px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-800 whitespace-nowrap"
+            >
+              Login/ Sign Up
+            </button>
+          ) : (
+            <div className="relative">
+              <button 
+                onClick={handleProfileClick}
+                className="p-2 px-4 lg:px-6 hover:bg-gray-100 rounded-full"
+              >
+                <User size={24} className="text-gray-700" />
+              </button>
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg border border-gray-200 z-10 overflow-hidden">
+                  <button
+                    onClick={() => handleProfileAction('profile')}
+                    className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Profile
+                  </button>
+                  <button
+                    onClick={() => handleProfileAction('logout')}
+                    className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-200"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           )}
-        </button>
+
+          {/* Cart Button */}
+          <button 
+            onClick={() => navigate('/cart')}
+            className="relative p-2 px-4 lg:px-6 hover:bg-gray-100 rounded-full"
+          >
+            <ShoppingCart size={24} className="text-gray-700" />
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                {totalItems}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Mobile Layout */}
+        <div className="md:hidden">
+          {/* Top Row - Logo and Actions */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center cursor-pointer" onClick={handleLogoClick}>
+              <h1 className="text-dark-green font-bold text-lg">
+                GroceryVoice
+              </h1>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Login/Profile */}
+              {!isAuthenticated ? (
+                <button 
+                  onClick={() => dispatch(openAuthModal({ isLogin: true }))}
+                  className="bg-black text-white px-3 py-2 rounded-md text-xs font-medium hover:bg-gray-800"
+                >
+                  Login
+                </button>
+              ) : (
+                <div className="relative">
+                  <button 
+                    onClick={handleProfileClick}
+                    className="p-2 hover:bg-gray-100 rounded-full"
+                  >
+                    <User size={20} className="text-gray-700" />
+                  </button>
+                  {showProfileMenu && (
+                    <div className="absolute right-0 mt-2 w-36 bg-white rounded-md shadow-lg border border-gray-200 z-10 overflow-hidden">
+                      <button
+                        onClick={() => handleProfileAction('profile')}
+                        className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Profile
+                      </button>
+                      <button
+                        onClick={() => handleProfileAction('logout')}
+                        className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-200"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Cart */}
+              <button 
+                onClick={() => navigate('/cart')}
+                className="relative p-2 hover:bg-gray-100 rounded-full"
+              >
+                <ShoppingCart size={20} className="text-gray-700" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="relative">
+            <div className="relative flex items-center">
+              <Search className="absolute left-3 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search for Products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-gray-400 text-sm"
+              />
+            </div>
+          </form>
+        </div>
       </div>
     </nav>
   )

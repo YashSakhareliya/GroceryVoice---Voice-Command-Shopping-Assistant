@@ -89,83 +89,83 @@ function HomePage() {
       <Navbar />
       <CategoryNav />
       
-      <main className="max-w-7xl mx-auto py-6 px-8">
+      <main className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
         {/* Best Deals Section */}
-        <section className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Best Deals</h2>
-            <div className="flex items-center gap-3">
-              <a href="#" className="text-sm text-dark-green font-semibold hover:underline">
+        <section className="mb-6 sm:mb-8">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Best Deals</h2>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <a href="#" className="text-xs sm:text-sm text-dark-green font-semibold hover:underline hidden sm:block">
                 View All
               </a>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 sm:gap-2">
                 <button
                   onClick={() => scroll(bestDealsRef, 'left')}
-                  className="bg-white border border-gray-300 rounded-full p-1.5 hover:bg-gray-100"
+                  className="bg-white border border-gray-300 rounded-full p-1 sm:p-1.5 hover:bg-gray-100"
                 >
-                  <ChevronLeft size={18} className="text-gray-600" />
+                  <ChevronLeft size={16} className="text-gray-600 sm:w-[18px] sm:h-[18px]" />
                 </button>
                 <button
                   onClick={() => scroll(bestDealsRef, 'right')}
-                  className="bg-white border border-gray-300 rounded-full p-1.5 hover:bg-gray-100"
+                  className="bg-white border border-gray-300 rounded-full p-1 sm:p-1.5 hover:bg-gray-100"
                 >
-                  <ChevronRight size={18} className="text-gray-600" />
+                  <ChevronRight size={16} className="text-gray-600 sm:w-[18px] sm:h-[18px]" />
                 </button>
               </div>
             </div>
           </div>
           <div
             ref={bestDealsRef}
-            className="flex gap-4 overflow-x-auto scrollbar-hide pb-2"
+            className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-2 touch-pan-x"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {bestDealsProducts.length > 0 ? (
               bestDealsProducts.map((product) => (
-                <div key={product._id} className="flex-none w-64">
+                <div key={product._id} className="flex-none w-44 sm:w-52 md:w-64">
                   <ProductCard product={product} />
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-sm">No deals available at the moment</p>
+              <p className="text-gray-500 text-xs sm:text-sm">No deals available at the moment</p>
             )}
           </div>
         </section>
 
         {/* Frequently Bought Section - Based on History */}
         {frequentlyBoughtProducts.length > 0 && (
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-4">
+          <section className="mb-6 sm:mb-8">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Frequently Bought by You</h2>
-                <p className="text-sm text-gray-600">Based on your order history</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Frequently Bought by You</h2>
+                <p className="text-xs sm:text-sm text-gray-600">Based on your order history</p>
               </div>
-              <div className="flex items-center gap-3">
-                <a href="#" className="text-sm text-dark-green font-semibold hover:underline">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <a href="#" className="text-xs sm:text-sm text-dark-green font-semibold hover:underline hidden sm:block">
                   View All
                 </a>
-                <div className="flex gap-2">
+                <div className="flex gap-1.5 sm:gap-2">
                   <button
                     onClick={() => scroll(frequentlyBoughtRef, 'left')}
-                    className="bg-white border border-gray-300 rounded-full p-1.5 hover:bg-gray-100"
+                    className="bg-white border border-gray-300 rounded-full p-1 sm:p-1.5 hover:bg-gray-100"
                   >
-                    <ChevronLeft size={18} className="text-gray-600" />
+                    <ChevronLeft size={16} className="text-gray-600 sm:w-[18px] sm:h-[18px]" />
                   </button>
                   <button
                     onClick={() => scroll(frequentlyBoughtRef, 'right')}
-                    className="bg-white border border-gray-300 rounded-full p-1.5 hover:bg-gray-100"
+                    className="bg-white border border-gray-300 rounded-full p-1 sm:p-1.5 hover:bg-gray-100"
                   >
-                    <ChevronRight size={18} className="text-gray-600" />
+                    <ChevronRight size={16} className="text-gray-600 sm:w-[18px] sm:h-[18px]" />
                   </button>
                 </div>
               </div>
             </div>
             <div
               ref={frequentlyBoughtRef}
-              className="flex gap-4 overflow-x-auto scrollbar-hide pb-2"
+              className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-2 touch-pan-x"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {frequentlyBoughtProducts.map((product) => (
-                <div key={product._id} className="flex-none w-64">
+                <div key={product._id} className="flex-none w-44 sm:w-52 md:w-64">
                   <ProductCard product={product} />
                 </div>
               ))}
@@ -174,68 +174,68 @@ function HomePage() {
         )}
 
         {/* Your Daily Staples Section */}
-        <section className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Your Daily Staples</h2>
-            <div className="flex items-center gap-3">
-              <a href="#" className="text-sm text-dark-green font-semibold hover:underline">
+        <section className="mb-6 sm:mb-8">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Your Daily Staples</h2>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <a href="#" className="text-xs sm:text-sm text-dark-green font-semibold hover:underline hidden sm:block">
                 View All
               </a>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 sm:gap-2">
                 <button
                   onClick={() => scroll(dailyStaplesRef, 'left')}
-                  className="bg-white border border-gray-300 rounded-full p-1.5 hover:bg-gray-100"
+                  className="bg-white border border-gray-300 rounded-full p-1 sm:p-1.5 hover:bg-gray-100"
                 >
-                  <ChevronLeft size={18} className="text-gray-600" />
+                  <ChevronLeft size={16} className="text-gray-600 sm:w-[18px] sm:h-[18px]" />
                 </button>
                 <button
                   onClick={() => scroll(dailyStaplesRef, 'right')}
-                  className="bg-white border border-gray-300 rounded-full p-1.5 hover:bg-gray-100"
+                  className="bg-white border border-gray-300 rounded-full p-1 sm:p-1.5 hover:bg-gray-100"
                 >
-                  <ChevronRight size={18} className="text-gray-600" />
+                  <ChevronRight size={16} className="text-gray-600 sm:w-[18px] sm:h-[18px]" />
                 </button>
               </div>
             </div>
           </div>
           <div
             ref={dailyStaplesRef}
-            className="flex gap-4 overflow-x-auto scrollbar-hide pb-2"
+            className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-2 touch-pan-x"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {dailyStaplesProducts.length > 0 ? (
               dailyStaplesProducts.map((product) => (
-                <div key={product._id} className="flex-none w-64">
+                <div key={product._id} className="flex-none w-44 sm:w-52 md:w-64">
                   <ProductCard product={product} />
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-sm">No products available</p>
+              <p className="text-gray-500 text-xs sm:text-sm">No products available</p>
             )}
           </div>
         </section>
 
         {/* Shop by Category Section */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Shop by Category</h2>
+        <section className="mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Shop by Category</h2>
           {categories.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
               {categories.map((category) => (
                 <a
                   key={category._id}
                   href={`/products?category=${encodeURIComponent(category.name)}`}
-                  className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow text-center group"
+                  className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow text-center group"
                 >
-                  <div className="text-4xl mb-2">
+                  <div className="text-3xl sm:text-4xl mb-1.5 sm:mb-2">
                     {category.icon || '📦'}
                   </div>
-                  <h3 className="text-sm font-medium text-gray-900 group-hover:text-dark-green transition-colors">
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-900 group-hover:text-dark-green transition-colors">
                     {category.name}
                   </h3>
                 </a>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-sm">No categories available</p>
+            <p className="text-gray-500 text-xs sm:text-sm">No categories available</p>
           )}
         </section>
       </main>

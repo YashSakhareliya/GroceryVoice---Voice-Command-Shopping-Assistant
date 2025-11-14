@@ -41,48 +41,48 @@ function SubstituteModal({ product, onClose }) {
 
   return (
     <div 
-      className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-lg shadow-2xl max-w-sm sm:max-w-2xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-green-500 text-white px-6 py-4 flex items-center justify-between">
+        <div className="bg-green-500 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div>
-            <h3 className="font-bold text-lg">Product Out of Stock</h3>
-            <p className="text-sm text-red-100 mt-1">
+            <h3 className="font-bold text-base sm:text-lg">Product Out of Stock</h3>
+            <p className="text-xs sm:text-sm text-red-100 mt-0.5 sm:mt-1 line-clamp-1">
               "{product.name}" is currently unavailable
             </p>
           </div>
           <button 
             onClick={onClose}
-            className="hover:bg-red-700 rounded-full p-1 transition-colors"
+            className="hover:bg-red-700 rounded-full p-1 transition-colors shrink-0"
           >
-            <X size={24} />
+            <X size={20} className="sm:w-6 sm:h-6" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+        <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-150px)] sm:max-h-[calc(90vh-120px)]">
           {loading ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">Loading substitute products...</p>
+            <div className="text-center py-6 sm:py-8">
+              <p className="text-gray-500 text-sm sm:text-base">Loading substitute products...</p>
             </div>
           ) : substitutes.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-600 font-medium mb-2">
+            <div className="text-center py-6 sm:py-8">
+              <p className="text-gray-600 font-medium mb-1 sm:mb-2 text-sm sm:text-base">
                 No substitute products available at the moment
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs sm:text-sm text-gray-500">
                 Please check back later or browse similar categories
               </p>
             </div>
           ) : (
             <>
-              <h4 className="font-semibold text-gray-900 mb-4">
+              <h4 className="font-semibold text-gray-900 mb-3 sm:mb-4 text-sm sm:text-base">
                 Available Substitute Products:
               </h4>
               
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                 {substitutes.map((substitute) => (
                   <ProductCard key={substitute._id} product={substitute} compact />
                 ))}
@@ -92,10 +92,10 @@ function SubstituteModal({ product, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 px-6 py-4 bg-gray-50">
+        <div className="border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 bg-gray-50">
           <button
             onClick={onClose}
-            className="w-full py-2 border border-gray-300 rounded-md text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+            className="w-full py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
           >
             Close
           </button>

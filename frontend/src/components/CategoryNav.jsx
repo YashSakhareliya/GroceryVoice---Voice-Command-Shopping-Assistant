@@ -48,16 +48,16 @@ function CategoryNav() {
   }
 
   return (
-    <div className="w-full bg-gray-50 py-3 border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-8 relative">
+    <div className="w-full bg-gray-50 py-2 sm:py-3 border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div className="flex items-center gap-2">
           {/* Left Arrow */}
           {showLeftArrow && (
             <button
               onClick={() => scroll('left')}
-              className="absolute left-4 z-10 bg-white shadow-md rounded-full p-1 hover:bg-gray-100"
+              className="absolute left-2 sm:left-4 z-10 bg-white shadow-md rounded-full p-1 hover:bg-gray-100"
             >
-              <ChevronLeft size={20} className="text-gray-600" />
+              <ChevronLeft size={18} className="text-gray-600 sm:w-5 sm:h-5" />
             </button>
           )}
 
@@ -65,14 +65,14 @@ function CategoryNav() {
           <div
             ref={scrollContainerRef}
             onScroll={checkArrows}
-            className="flex items-center gap-6 overflow-x-auto scrollbar-hide scroll-smooth"
+            className="flex items-center gap-4 sm:gap-6 overflow-x-auto scrollbar-hide scroll-smooth touch-pan-x"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {categories.map((category) => (
               <button
                 key={category._id}
                 onClick={() => navigate(`/products?category=${encodeURIComponent(category.name)}`)}
-                className="text-sm text-gray-700 hover:text-dark-green font-medium whitespace-nowrap transition-colors"
+                className="text-xs sm:text-sm text-gray-700 hover:text-dark-green font-medium whitespace-nowrap transition-colors py-1"
               >
                 {category.name}
               </button>
@@ -83,9 +83,9 @@ function CategoryNav() {
           {showRightArrow && (
             <button
               onClick={() => scroll('right')}
-              className="absolute right-4 z-10 bg-white shadow-md rounded-full p-1 hover:bg-gray-100"
+              className="absolute right-2 sm:right-4 z-10 bg-white shadow-md rounded-full p-1 hover:bg-gray-100"
             >
-              <ChevronRight size={20} className="text-gray-600" />
+              <ChevronRight size={18} className="text-gray-600 sm:w-5 sm:h-5" />
             </button>
           )}
         </div>

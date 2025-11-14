@@ -204,12 +204,12 @@ function ProductsPage() {
       <Navbar />
       <CategoryNav />
       
-      <main className="max-w-7xl mx-auto py-6 px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <main className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Left Column - Filters */}
-          <aside className="col-span-1">
+          <aside className="hidden lg:block lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm p-4 sticky top-4">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Filters</h2>
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Filters</h2>
 
               {/* Category Filter */}
               <FilterSection title="Category" sectionKey="category">
@@ -284,28 +284,28 @@ function ProductsPage() {
           </aside>
 
           {/* Right Column - Products */}
-          <div className="col-span-1 md:col-span-3">
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-900">{getPageTitle()}</h1>
-              <p className="text-sm text-gray-600 mt-1">
+          <div className="col-span-1 lg:col-span-3">
+            <div className="mb-4 sm:mb-6">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{getPageTitle()}</h1>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">
                 {loading ? 'Loading...' : `${products.length} products found`}
               </p>
             </div>
 
             {loading ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">Loading products...</p>
+              <div className="text-center py-8 sm:py-12">
+                <p className="text-gray-500 text-base sm:text-lg">Loading products...</p>
               </div>
             ) : products.length > 0 ? (
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {products.map((product) => (
                   <ProductCard key={product._id} product={product} />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No products found</p>
-                <p className="text-gray-400 text-sm mt-2">Try adjusting your filters or search query</p>
+              <div className="text-center py-8 sm:py-12">
+                <p className="text-gray-500 text-base sm:text-lg">No products found</p>
+                <p className="text-gray-400 text-xs sm:text-sm mt-2">Try adjusting your filters or search query</p>
               </div>
             )}
           </div>
