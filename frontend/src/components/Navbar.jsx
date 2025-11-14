@@ -8,6 +8,7 @@ import { fetchCart } from '../store/slices/cartSlice'
 function Navbar() {
   const [selectedLocation, setSelectedLocation] = useState('Mumbai')
   const [searchQuery, setSearchQuery] = useState('')
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { isAuthenticated, user } = useSelector((state) => state.auth)
@@ -36,6 +37,19 @@ function Navbar() {
 
   const handleLogoClick = () => {
     navigate('/')
+  }
+
+  const handleProfileClick = () => {
+    setShowProfileMenu(!showProfileMenu)
+  }
+
+  const handleProfileAction = (action) => {
+    setShowProfileMenu(false)
+    if (action === 'profile') {
+      navigate('/profile')
+    } else if (action === 'logout') {
+      dispatch(logout())
+    }
   }
 
   return (
@@ -85,24 +99,29 @@ function Navbar() {
             Login/ Sign Up
           </button>
         ) : (
-          <div className="relative group">
-            <button className="p-2 px-6 hover:bg-gray-100 rounded-full">
+          <div className="relative">
+            <button 
+              onClick={handleProfileClick}
+              className="p-2 px-6 hover:bg-gray-100 rounded-full"
+            >
               <User size={24} className="text-gray-700" />
             </button>
-            <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg border border-gray-200 hidden group-hover:block z-10 overflow-hidden">
-              <button
-                onClick={() => navigate('/profile')}
-                className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                Profile
-              </button>
-              <button
-                onClick={() => dispatch(logout())}
-                className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-200"
-              >
-                Logout
-              </button>
-            </div>
+            {showProfileMenu && (
+              <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg border border-gray-200 z-10 overflow-hidden">
+                <button
+                  onClick={() => handleProfileAction('profile')}
+                  className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Profile
+                </button>
+                <button
+                  onClick={() => handleProfileAction('logout')}
+                  className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-200"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         )}
 
