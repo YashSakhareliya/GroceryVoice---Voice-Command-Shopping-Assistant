@@ -12,8 +12,10 @@ function VoiceAssistant() {
   const [transcript, setTranscript] = useState('')
   const [interimTranscript, setInterimTranscript] = useState('')
   const [responseMessage, setResponseMessage] = useState('')
+  const [micPermissionGranted, setMicPermissionGranted] = useState(false)
   const recognitionRef = useRef(null)
   const silenceTimerRef = useRef(null)
+  const autoContinueTimerRef = useRef(null)
 
   useEffect(() => {
     // Check if browser supports Web Speech API
@@ -23,6 +25,7 @@ function VoiceAssistant() {
       recognitionRef.current.continuous = true
       recognitionRef.current.interimResults = true
       recognitionRef.current.lang = 'en-US'
+      recognitionRef.current.maxAlternatives = 3 // Get more alternatives for better accuracy
 
       recognitionRef.current.onresult = (event) => {
         let interim = ''
@@ -74,6 +77,9 @@ function VoiceAssistant() {
       if (silenceTimerRef.current) {
         clearTimeout(silenceTimerRef.current)
       }
+      if (autoContinueTimerRef.current) {
+        clearTimeout(autoContinueTimerRef.current)
+      }
     }
   }, [isListening])
 
@@ -84,21 +90,79 @@ function VoiceAssistant() {
     // Auto-stop after 3 seconds of silence
     silenceTimerRef.current = setTimeout(() => {
       if (isListening && transcript) {
+        console.log('Auto-stopping due to silence')
         handleStopListening()
+        // Start auto-continue timer after auto-stopping
+        startAutoContinueTimer()
       }
     }, 3000)
   }
 
-  const handleStartListening = () => {
+  const startAutoContinueTimer = () => {
+    // Clear existing timer
+    if (autoContinueTimerRef.current) {
+      clearTimeout(autoContinueTimerRef.current)
+    }
+    // Auto-click continue after 5 seconds of stopping
+    autoContinueTimerRef.current = setTimeout(() => {
+      console.log('Auto-continue triggered')
+      handleContinue()
+    }, 5000)
+  }
+
+  const handleStartListening = async () => {
     if (recognitionRef.current) {
-      setTranscript('')
-      setInterimTranscript('')
-      setIsListening(true)
+      // Request microphone permission first with enhanced audio constraints
       try {
-        recognitionRef.current.start()
-        resetSilenceTimer()
-      } catch (e) {
-        console.error('Error starting recognition:', e)
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true, // Automatically adjusts gain for low volume
+            sampleRate: 48000,
+            channelCount: 1
+          }
+        })
+        // Permission granted, stop the stream as we just needed permission
+        stream.getTracks().forEach(track => track.stop())
+        setMicPermissionGranted(true)
+        
+        setTranscript('')
+        setInterimTranscript('')
+        setIsListening(true)
+        
+        // Clear any existing timers
+        if (autoContinueTimerRef.current) {
+          clearTimeout(autoContinueTimerRef.current)
+        }
+        
+        try {
+          recognitionRef.current.start()
+          resetSilenceTimer()
+        } catch (e) {
+          console.error('Error starting recognition:', e)
+          // If already started, stop and restart
+          if (e.name === 'InvalidStateError') {
+            recognitionRef.current.stop()
+            setTimeout(() => {
+              try {
+                recognitionRef.current.start()
+                resetSilenceTimer()
+              } catch (err) {
+                console.error('Error restarting recognition:', err)
+                setIsListening(false)
+              }
+            }, 100)
+          } else {
+            setIsListening(false)
+          }
+        }
+      } catch (error) {
+        console.error('Microphone permission denied:', error)
+        setResponseMessage('Microphone permission denied. Please allow microphone access and try again.')
+        setTimeout(() => {
+          setResponseMessage('')
+        }, 3000)
       }
     }
   }
@@ -115,13 +179,19 @@ function VoiceAssistant() {
 
   const handleContinue = async () => {
     handleStopListening()
+    
+    // Clear auto-continue timer
+    if (autoContinueTimerRef.current) {
+      clearTimeout(autoContinueTimerRef.current)
+    }
+    
     const finalTranscript = transcript + interimTranscript
     if (finalTranscript.trim()) {
       try {
         // Import at top: import { voiceService } from '../services/voiceService'
         const { voiceService } = await import('../services/voiceService')
         const response = await voiceService.processCommand(finalTranscript.trim())
-        console.log('Voice Command Response:', response)
+        // console.log('Voice Command Response:', response)
         
         // Show response message
         setResponseMessage(response.message || 'Command processed')
@@ -171,6 +241,9 @@ function VoiceAssistant() {
 
   const handleClose = () => {
     handleStopListening()
+    if (autoContinueTimerRef.current) {
+      clearTimeout(autoContinueTimerRef.current)
+    }
     setTranscript('')
     setInterimTranscript('')
     setResponseMessage('')
@@ -274,7 +347,7 @@ function VoiceAssistant() {
               </div>
 
               <p className="text-[10px] sm:text-xs text-gray-500 mt-3 sm:mt-4 text-center">
-                Speak clearly into your microphone. Recording will auto-stop after 3 seconds of silence.
+                <strong>How to use:</strong> Click "Start Recording" → Speak your command → Click "Stop" when restart & stop → Click "Continue" to execute. Auto-features: Recording pauses after 3s silence
               </p>
             </div>
           </div>
