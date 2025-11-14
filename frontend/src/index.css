@@ -10,6 +10,22 @@ body {
   background-color: white;
 }
 
+/* Optimize scrollable containers for smooth performance */
+.scrollbar-hide {
+  will-change: scroll-position;
+  -webkit-overflow-scrolling: touch;
+}
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Optimize images for better scroll performance */
+img {
+  content-visibility: auto;
+}
+
+/* Smooth scroll for touch interactions */
+.touch-pan-x {
+  -webkit-overflow-scrolling: touch;
 }

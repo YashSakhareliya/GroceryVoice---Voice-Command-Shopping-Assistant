@@ -110,12 +110,12 @@ function Navbar() {
               </button>
               {showProfileMenu && (
                 <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg border border-gray-200 z-10 overflow-hidden">
-                  <button
+                  {/* <button
                     onClick={() => handleProfileAction('profile')}
                     className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     Profile
-                  </button>
+                  </button> */}
                   <button
                     onClick={() => handleProfileAction('logout')}
                     className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-200"

@@ -80,9 +80,11 @@ function HomePage() {
   const scroll = (ref, direction) => {
     if (ref.current) {
       const scrollAmount = 300
-      ref.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
+      requestAnimationFrame(() => {
+        ref.current.scrollBy({
+          left: direction === 'left' ? -scrollAmount : scrollAmount,
+          behavior: 'smooth'
+        })
       })
     }
   }

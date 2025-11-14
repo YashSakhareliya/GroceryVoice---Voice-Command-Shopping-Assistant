@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { Plus, Minus } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { addToCartAsync, updateQuantityAsync } from '../store/slices/cartSlice'
 import SubstituteModal from './SubstituteModal'
 
-function ProductCard({ 
+const ProductCard = memo(function ProductCard({ 
   product,
   compact = false
 }) {
@@ -57,6 +57,7 @@ function ProductCard({
         <img 
           src={product.imageUrl || 'https://placehold.co/200x200/f8fafc/64748b?text=Product'} 
           alt={product.name}
+          loading="lazy"
           className={`w-full ${imageHeight} object-cover ${product.stock === 0 ? 'opacity-50' : ''}`}
         />
         {product.stock === 0 && (
@@ -141,7 +142,7 @@ function ProductCard({
       )}
     </div>
   )
-}
+})
 
 export default ProductCard
 
