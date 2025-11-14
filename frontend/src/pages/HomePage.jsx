@@ -14,6 +14,7 @@ function HomePage() {
   const [bestDealsProducts, setBestDealsProducts] = useState([])
   const [frequentlyBoughtProducts, setFrequentlyBoughtProducts] = useState([])
   const [dailyStaplesProducts, setDailyStaplesProducts] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -37,15 +38,20 @@ function HomePage() {
           tags: 'staples,daily,essential'
         })
         
+        // Fetch categories
+        const categoriesResponse = await productService.getCategories()
+        
         setBestDealsProducts(dealsResponse.data.suggestions || [])
         setFrequentlyBoughtProducts(historyResponse.data.suggestions || [])
         setDailyStaplesProducts(staplesResponse.products || [])
+        setCategories(categoriesResponse.categories || [])
       } catch (error) {
         console.error('Error fetching products:', error)
         // Keep empty arrays if fetch fails
         setBestDealsProducts([])
         setFrequentlyBoughtProducts([])
         setDailyStaplesProducts([])
+        setCategories([])
       } finally {
         setLoading(false)
       }
@@ -63,13 +69,6 @@ function HomePage() {
       })
     }
   }
-
-  const categories = [
-    { id: 1, name: 'Fruits & Vegetables', image: 'https://placehold.co/250x150/84cc16/ffffff?text=Fruits' },
-    { id: 2, name: 'Dairy & Bakery', image: 'https://placehold.co/250x150/1d4a20/ffffff?text=Dairy' },
-    { id: 3, name: 'Staples', image: 'https://placehold.co/250x150/84cc16/ffffff?text=Staples' },
-    { id: 4, name: 'Snacks', image: 'https://placehold.co/250x150/1d4a20/ffffff?text=Snacks' },
-  ]
 
   if (loading) {
     return (
@@ -218,26 +217,26 @@ function HomePage() {
         {/* Shop by Category Section */}
         <section className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Shop by Category</h2>
-          <div className="grid grid-cols-4 gap-4">
-            {categories.map((category) => (
-              <a
-                key={category.id}
-                href="#"
-                className="relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow group"
-              >
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="w-full h-40 object-cover"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
-                  <h3 className="text-white text-lg font-bold text-center px-2">
+          {categories.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {categories.map((category) => (
+                <a
+                  key={category._id}
+                  href={`/products?category=${encodeURIComponent(category.name)}`}
+                  className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow text-center group"
+                >
+                  <div className="text-4xl mb-2">
+                    {category.icon || '📦'}
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-900 group-hover:text-dark-green transition-colors">
                     {category.name}
                   </h3>
-                </div>
-              </a>
-            ))}
-          </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No categories available</p>
+          )}
         </section>
       </main>
     </div>
