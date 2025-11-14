@@ -46,7 +46,7 @@ function AuthModal() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0  bg-opacity-30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-gray-500 rounded-2xl sm:rounded-3xl shadow-xl max-w-sm sm:max-w-2xl w-full overflow-hidden flex flex-col sm:flex-row relative">
         {/* Close Button */}
         <button

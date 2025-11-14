@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useRef, useState, useEffect } from 'react'
+import { useSelector } from 'react-redux'
 import Navbar from '../components/Navbar'
 import CategoryNav from '../components/CategoryNav'
 import ProductCard from '../components/ProductCard'
@@ -11,6 +12,7 @@ function HomePage() {
   const frequentlyBoughtRef = useRef(null)
   const dailyStaplesRef = useRef(null)
 
+  const { isAuthenticated } = useSelector((state) => state.auth)
   const [bestDealsProducts, setBestDealsProducts] = useState([])
   const [frequentlyBoughtProducts, setFrequentlyBoughtProducts] = useState([])
   const [dailyStaplesProducts, setDailyStaplesProducts] = useState([])
@@ -22,24 +24,39 @@ function HomePage() {
       try {
         setLoading(true)
         
-        // Fetch deals from suggestions API
+        // Fetch deals from suggestions API (public endpoint)
         const dealsResponse = await api.get('/suggestions/deals', { 
           params: { limit: 10 } 
+        }).catch((error) => {
+          console.log('Error fetching deals:', error.message)
+          return { data: { suggestions: [] } }
         })
         
-        // Fetch frequently purchased items from history
-        const historyResponse = await api.get('/suggestions/history', { 
-          params: { limit: 10 } 
-        }).catch(() => ({ data: { suggestions: [] } })) // Handle unauthorized gracefully
+        // Fetch frequently purchased items from history (only if authenticated)
+        let historyResponse = { data: { suggestions: [] } }
+        if (isAuthenticated) {
+          historyResponse = await api.get('/suggestions/history', { 
+            params: { limit: 10 } 
+          }).catch((error) => {
+            console.log('Error fetching history:', error.message)
+            return { data: { suggestions: [] } }
+          })
+        }
         
-        // Fetch regular products for daily staples
+        // Fetch regular products for daily staples (public endpoint)
         const staplesResponse = await productService.getProducts({ 
           limit: 10,
           tags: 'staples,daily,essential'
+        }).catch((error) => {
+          console.log('Error fetching staples:', error.message)
+          return { products: [] }
         })
         
-        // Fetch categories
-        const categoriesResponse = await productService.getCategories()
+        // Fetch categories (public endpoint)
+        const categoriesResponse = await productService.getCategories().catch((error) => {
+          console.log('Error fetching categories:', error.message)
+          return { categories: [] }
+        })
         
         setBestDealsProducts(dealsResponse.data.suggestions || [])
         setFrequentlyBoughtProducts(historyResponse.data.suggestions || [])
@@ -58,7 +75,7 @@ function HomePage() {
     }
 
     fetchProducts()
-  }, [])
+  }, [isAuthenticated])
 
   const scroll = (ref, direction) => {
     if (ref.current) {

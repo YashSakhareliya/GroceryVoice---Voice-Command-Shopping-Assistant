@@ -29,10 +29,21 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/'
+      // Check if this is a public endpoint
+      const publicEndpoints = ['/suggestions/deals', '/products', '/suggestions/substitutes']
+      const isPublicEndpoint = publicEndpoints.some(endpoint => 
+        error.config?.url?.includes(endpoint)
+      )
+      
+      if (!isPublicEndpoint) {
+        // Token expired or invalid - only redirect for protected routes
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        // Don't redirect if already on home page to prevent infinite loop
+        if (window.location.pathname !== '/') {
+          window.location.href = '/'
+        }
+      }
     }
     return Promise.reject(error)
   }
